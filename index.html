@@ -14,7 +14,7 @@
     <div class="header-left">
       <span>■ 360 WAVE DEV TOOL 11</span>
       <span style="color: var(--border);">|</span>
-      <span>SYS.VER: 6.0.0-DECOUPLED</span>
+      <span>SYS.VER: 6.1.0-STRUCTURED</span>
       <span style="color: var(--border);">|</span>
       <span id="theme-tag">PALETTE: DYNAMIC</span>
     </div>
@@ -36,6 +36,7 @@
           <button id="mode-organizer" class="mode-btn" onclick="switchMode('organizer')">SKU ORGANIZER</button>
         </div>
 
+        <!-- Renamer Inputs -->
         <div id="renamer-fields">
           <div class="field-group">
             <label class="field-label">1. SOURCE PDF DIRECTORY / FILES:</label>
@@ -52,20 +53,32 @@
           </div>
         </div>
 
+        <!-- Organizer Inputs -->
         <div id="organizer-fields" style="display: none;">
           <div class="field-group">
             <label class="field-label">1. SOURCE FILES TO CATEGORIZE:</label>
             <input type="file" id="orgTargetFiles" multiple />
           </div>
+
+          <!-- Hierarchical SKU Dropdown -->
           <div class="field-group">
-            <label class="field-label">2. SKU FOLDER CATEGORY:</label>
+            <label class="field-label">2. SELECT SKU TARGET FOLDER / CSV MAP:</label>
             <select id="skuSelect" class="dropdown">
-              <option value="WOYC_SOC6_SKU">WOYC_SOC6_SKU</option>
-              <option value="Organizer_SKU">Organizer_SKU</option>
-              <option value="custom">-- UPLOAD CSV FILES MANUALLY --</option>
+              <optgroup label="📂 WOYC_SOC6_SKU (Ready for Processing)">
+                <option value="WOYC_SOC6_SKU">WOYC_SOC6_SKU (Entire Category)</option>
+                <option value="SKU/WOYC_SOC6_SKU/SKU_Mapping.csv">├─ SKU_Mapping.csv</option>
+              </optgroup>
+              <optgroup label="📂 Organizer_SKU">
+                <option value="Organizer_SKU">Organizer_SKU (Entire Category)</option>
+                <option value="SKU/Organizer_SKU/SKU_Mapping.csv">├─ SKU_Mapping.csv</option>
+              </optgroup>
+              <optgroup label="📂 Custom Operations">
+                <option value="custom">-- UPLOAD LOCAL CSV FILES --</option>
+              </optgroup>
             </select>
           </div>
-          <button type="button" class="btn-secondary" onclick="openSkuEditor()">✎ VIEW / ADD / EDIT SKU RULES</button>
+
+          <button type="button" class="btn-secondary" onclick="openSkuEditor()">✎ VIEW / ADD / EDIT ACTIVE SKU LIST</button>
 
           <div class="field-group" id="customCsvGroup" style="display: none; margin-top: 6px;">
             <label class="field-label">3. UPLOAD CUSTOM CSV LIST(S):</label>
@@ -74,7 +87,7 @@
 
           <div class="field-group" style="margin-top: 6px;">
             <label style="font-size: 10px; display: flex; align-items: center; gap: 5px;">
-              <input type="checkbox" id="renameCountCheck" checked /> RENAME FINAL FOLDER WITH COUNT
+              <input type="checkbox" id="renameCountCheck" checked /> RENAME FINAL SUBFOLDER WITH COUNT
             </label>
           </div>
         </div>
@@ -85,7 +98,7 @@
       </div>
     </div>
 
-    <!-- Column 2: Visual Gauges Deck -->
+    <!-- Column 2: Vector Gauges Deck -->
     <div class="hud-frame center-deck">
       <div style="background: var(--accent); color: var(--white); padding: 3px 16px; font-size: 11px; font-weight: bold;">
         STAT.RG // ACTIVE COCKPIT
@@ -108,12 +121,12 @@
 
       <div style="display: flex; justify-content: space-between; width: 100%; font-size: 9px; color: var(--text-muted); border-top: 1px dashed var(--border); padding-top: 6px;">
         <span>CORE 01: NOMINAL</span>
-        <span>ARCHITECTURE: MVC-DECOUPLED</span>
+        <span>ROUTE: WOYC PROTOCOL</span>
         <span>SCHEDULER: ASYNC-IO</span>
       </div>
     </div>
 
-    <!-- Column 3: Output Telemetry Panel -->
+    <!-- Column 3: Telemetry Stream -->
     <div class="column">
       <div class="hud-frame" style="padding: 10px; flex: 1; display: flex; flex-direction: column;">
         <div class="telemetry-header">
@@ -128,15 +141,15 @@
 
   </div>
 
-  <!-- SKU Modal -->
+  <!-- SKU Modal Editor -->
   <div id="editorModal">
     <div class="modal-box hud-frame">
       <div class="card-title">
-        <span>✎ IN-MEMORY SKU LIST EDITOR</span>
+        <span id="modalTargetTitle">✎ IN-MEMORY SKU LIST EDITOR</span>
         <span style="cursor: pointer; color: var(--accent);" onclick="closeSkuEditor()">[X]</span>
       </div>
-      <label class="field-label">CATEGORY RULES (1 SKU PER LINE):</label>
-      <textarea id="modalSkuText" style="height: 220px;" placeholder="Paste or type SKUs here..."></textarea>
+      <label class="field-label">SKU ENTRIES (1 SKU PER LINE OR COMMA-SEPARATED):</label>
+      <textarea id="modalSkuText" style="height: 220px;" placeholder="Enter or edit SKUs here..."></textarea>
       <div style="display: flex; gap: 6px; justify-content: flex-end;">
         <button class="btn-secondary" onclick="closeSkuEditor()">CANCEL</button>
         <button class="btn-secondary" style="background: var(--accent); color: var(--white);" onclick="saveSkuEditor()">APPLY TO SESSION</button>
@@ -144,11 +157,9 @@
     </div>
   </div>
 
-  <!-- View Controller Script -->
   <script>
     let globalAccent = '#FF5500';
 
-    /* Color Palette Randomizer */
     function hsvToHex(h, s, v) {
       let r, g, b, i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
       switch (i % 6) {
@@ -184,7 +195,6 @@
         `STAT.RG // ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}:${pad(d.getMilliseconds(), 3)}`;
     }, 40);
 
-    /* UI State & Engine Instance */
     let activeMode = 'renamer';
 
     const engine = new BatchEngine({
@@ -216,22 +226,29 @@
       document.getElementById('customCsvGroup').style.display = (e.target.value === 'custom') ? 'block' : 'none';
     });
 
-    function openSkuEditor() {
-      const cat = document.getElementById('skuSelect').value;
-      document.getElementById('modalSkuText').value = engine.getSkuOverride(cat);
+    async function openSkuEditor() {
+      const target = document.getElementById('skuSelect').value;
+      document.getElementById('modalTargetTitle').textContent = `✎ EDITING: ${target}`;
+      let val = engine.getSkuOverride(target);
+      if (!val && target.endsWith('.csv')) {
+        try {
+          const res = await fetch(`https://raw.githubusercontent.com/emagein/D2P_Renaming/main/${target}`);
+          if (res.ok) val = await res.text();
+        } catch (e) {}
+      }
+      document.getElementById('modalSkuText').value = val;
       document.getElementById('editorModal').style.display = 'flex';
     }
     function closeSkuEditor() {
       document.getElementById('editorModal').style.display = 'none';
     }
     function saveSkuEditor() {
-      const cat = document.getElementById('skuSelect').value;
-      engine.setSkuOverride(cat, document.getElementById('modalSkuText').value);
-      engine.onLog(`[✓] SKU OVERRIDE APPLIED FOR ${cat}`);
+      const target = document.getElementById('skuSelect').value;
+      engine.setSkuOverride(target, document.getElementById('modalSkuText').value);
+      engine.onLog(`[✓] SKU RULES APPLIED FOR ${target}`);
       closeSkuEditor();
     }
 
-    /* Vector Gauge Drawing */
     function renderGauge(canvasId, ratio, primaryLabel, subLabel) {
       const cvs = document.getElementById(canvasId);
       const ctx = cvs.getContext('2d');
@@ -296,7 +313,7 @@
         } else {
           await engine.runOrganizer({
             targetFiles: document.getElementById('orgTargetFiles').files,
-            skuCategory: document.getElementById('skuSelect').value,
+            selectedTarget: document.getElementById('skuSelect').value,
             customCsvFiles: document.getElementById('orgCustomCsvFiles').files,
             renameCount: document.getElementById('renameCountCheck').checked
           });
