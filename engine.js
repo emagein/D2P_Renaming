@@ -1,13 +1,35 @@
 /**
  * TACTICAL CORE LOGIC ENGINE (PDF Renamer & SKU Organizer)
- * Decoupled from UI presentation.
+ * Decoupled Architecture with Unmatched Routing & Local Cache.
  */
 
 class BatchEngine {
   constructor(callbacks = {}) {
     this.onLog = callbacks.onLog || ((msg, type) => {});
     this.onProgress = callbacks.onProgress || ((g1, g2, g3) => {});
+    this.storageKey = 'd2p_sku_cache_v1';
+    this.inMemorySkuOverrides = this.loadCache();
+  }
+
+  loadCache() {
+    try {
+      const stored = localStorage.getItem(this.storageKey);
+      return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  saveCache() {
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(this.inMemorySkuOverrides));
+    } catch (e) {}
+  }
+
+  clearCache() {
+    localStorage.removeItem(this.storageKey);
     this.inMemorySkuOverrides = {};
+    this.onLog("[✓] SESSION & LOCAL STORAGE CACHE CLEARED.", 'warn');
   }
 
   triggerDownload(blob, filename) {
@@ -26,6 +48,7 @@ class BatchEngine {
 
   setSkuOverride(key, text) {
     this.inMemorySkuOverrides[key] = text;
+    this.saveCache();
   }
 
   getSkuOverride(key) {
@@ -93,34 +116,30 @@ class BatchEngine {
     this.onLog(`RENAMER DONE: Copied: ${renamed}, NO_SKU: ${noSku}`, 'success');
   }
 
-  /* 2. Core SKU File Organizer Pipeline with Custom Folder Logic */
-  async runOrganizer({ targetFiles, selectedTarget, customCsvFiles = [], renameCount = true }) {
+  /* 2. Core SKU File Organizer Pipeline with Unmatched Routing */
+  async runOrganizer({ targetFiles, selectedCategory, customCsvFiles = [], renameCount = true }) {
     if (!targetFiles || !targetFiles.length) {
       throw new Error("Select source files to categorize.");
     }
 
     let csvMapEntries = [];
-    const isWoycSoc6 = selectedTarget.includes('WOYC_SOC6_SKU');
+    const isWoycSoc6 = selectedCategory.includes('WOYC_SOC6_SKU');
 
-    // Check in-memory user overrides
-    if (this.inMemorySkuOverrides[selectedTarget] && this.inMemorySkuOverrides[selectedTarget].trim()) {
-      csvMapEntries.push({ name: selectedTarget.split('/').pop().replace(/\.csv$/i, ''), content: this.inMemorySkuOverrides[selectedTarget] });
-    } else if (selectedTarget === 'custom') {
+    if (selectedCategory === 'custom') {
       if (!customCsvFiles.length) throw new Error("Upload at least one custom SKU CSV file.");
       for (const file of customCsvFiles) {
         csvMapEntries.push({ name: file.name.replace(/\.csv$/i, ''), content: await file.text() });
       }
     } else {
-      // Auto-fetch from GitHub repo
-      try {
-        const path = selectedTarget.endsWith('.csv') ? selectedTarget : `SKU/${selectedTarget}`;
-        if (selectedTarget.endsWith('.csv')) {
-          const res = await fetch(`https://raw.githubusercontent.com/emagein/D2P_Renaming/main/${selectedTarget}`);
-          if (res.ok) {
-            csvMapEntries.push({ name: selectedTarget.split('/').pop().replace(/\.csv$/i, ''), content: await res.text() });
-          }
-        } else {
-          const apiRes = await fetch(`https://api.github.com/repos/emagein/D2P_Renaming/contents/${path}`);
+      // Check cache for category or individual files
+      const cachedKeys = Object.keys(this.inMemorySkuOverrides).filter(k => k.startsWith(selectedCategory));
+      if (cachedKeys.length > 0) {
+        for (const k of cachedKeys) {
+          csvMapEntries.push({ name: k.split('/').pop().replace(/\.csv$/i, ''), content: this.inMemorySkuOverrides[k] });
+        }
+      } else {
+        try {
+          const apiRes = await fetch(`https://api.github.com/repos/emagein/D2P_Renaming/contents/SKU/${selectedCategory}`);
           if (apiRes.ok) {
             const files = await apiRes.json();
             for (const f of files) {
@@ -130,11 +149,11 @@ class BatchEngine {
               }
             }
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
 
       if (!csvMapEntries.length) {
-        throw new Error(`No CSV records found for '${selectedTarget}'. Use 'VIEW / ADD / EDIT SKU RULES' to enter SKUs.`);
+        throw new Error(`No CSV records found for '${selectedCategory}'. Click 'VIEW / ADD / EDIT SKU RULES' to enter rules.`);
       }
     }
 
@@ -143,7 +162,6 @@ class BatchEngine {
     const moved = new Set();
     let totalMoved = 0;
 
-    // Destination Root Folder Rule
     const rootFolderContainer = isWoycSoc6 ? zip.folder("Ready for Processing") : zip;
 
     for (let i = 0; i < csvMapEntries.length; i++) {
@@ -184,19 +202,29 @@ class BatchEngine {
       });
     }
 
+    // 4. Route unorganized files to "Not Matched" folder
+    let unmatchedCount = 0;
+    const notMatchedDir = rootFolderContainer.folder("Not Matched");
+    for (const file of filesArr) {
+      if (!moved.has(file.name)) {
+        notMatchedDir.file(file.name, file);
+        unmatchedCount++;
+        this.onLog(`NOT MATCHED: ${file.name}`, 'warn');
+      }
+    }
+
     this.onProgress({
       gauge1: { ratio: totalMoved / filesArr.length, text: `${totalMoved}/${filesArr.length}`, label: 'MATCHED' },
       gauge3: { ratio: 1.0, text: '100%', label: 'COMPLETE' }
     });
 
-    if (totalMoved > 0) {
+    if (totalMoved > 0 || unmatchedCount > 0) {
       const blob = await zip.generateAsync({ type: 'blob' });
-      // Output ZIP filename naming rule: WOYC_ total count
       const exportZipName = `WOYC_ ${totalMoved}.zip`;
       this.triggerDownload(blob, exportZipName);
-      this.onLog(`DONE: Downloaded '${exportZipName}' with ${totalMoved} files.`, 'success');
+      this.onLog(`DONE: Generated '${exportZipName}'. Matched: ${totalMoved}, Not Matched: ${unmatchedCount}`, 'success');
     } else {
-      this.onLog("No files matched the SKU rules.", 'warn');
+      this.onLog("No files processed.", 'warn');
     }
   }
 }
