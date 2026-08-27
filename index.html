@@ -3,323 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>360 WAVE DEV TOOL // HUD TACTICAL BATCH ENGINE</title>
+  <title>360 WAVE DEV TOOL // HUD BATCH ENGINE</title>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <style>
-    :root {
-      --bg: #DEE3EB;
-      --panel: #CAD2DE;
-      --card-bg: rgba(202, 210, 222, 0.75);
-      --border: #8D9BAE;
-      --border-light: #B2BDCC;
-      --slate-dark: #1E2530;
-      --slate-mid: #4A5568;
-      --accent: #FF5500;
-      --accent-dim: rgba(255, 85, 0, 0.15);
-      --text-main: #0F172A;
-      --text-muted: #5A6A80;
-      --white: #FFFFFF;
-      --font-mono: 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-mono); }
-
-    body {
-      background-color: var(--bg);
-      background-image: 
-        radial-gradient(var(--border-light) 1px, transparent 1px),
-        linear-gradient(to right, rgba(141, 155, 174, 0.15) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(141, 155, 174, 0.15) 1px, transparent 1px);
-      background-size: 24px 24px, 120px 120px, 120px 120px;
-      color: var(--text-main);
-      padding: 16px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      position: relative;
-      overflow-x: hidden;
-    }
-
-    /* Sci-Fi Tactical Corner Borders */
-    .hud-frame {
-      border: 1px solid var(--border);
-      position: relative;
-      background: var(--card-bg);
-      backdrop-filter: blur(4px);
-    }
-    .hud-frame::before, .hud-frame::after {
-      content: '';
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      border-color: var(--slate-dark);
-      pointer-events: none;
-    }
-    .hud-frame::before { top: -1px; left: -1px; border-top: 2px solid; border-left: 2px solid; }
-    .hud-frame::after { bottom: -1px; right: -1px; border-bottom: 2px solid; border-right: 2px solid; }
-
-    /* Top HUD Header */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 14px;
-      border-bottom: 1.5px solid var(--border);
-    }
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 11px;
-      font-weight: bold;
-      letter-spacing: 1px;
-    }
-    .tech-badge {
-      background: var(--accent);
-      color: var(--white);
-      padding: 4px 10px;
-      font-size: 10px;
-      letter-spacing: 0.5px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .tech-badge::before {
-      content: '■';
-      font-size: 8px;
-    }
-
-    /* Main Grid Layout */
-    .main-grid {
-      display: grid;
-      grid-template-columns: 360px 1fr 340px;
-      gap: 14px;
-      flex: 1;
-    }
-
-    @media (max-width: 1024px) {
-      .main-grid { grid-template-columns: 1fr; }
-    }
-
-    .column {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    /* Section Headers */
-    .card-title {
-      font-size: 10px;
-      font-weight: bold;
-      color: var(--slate-dark);
-      letter-spacing: 1.5px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-bottom: 4px;
-      border-bottom: 1px dashed var(--border);
-      margin-bottom: 10px;
-    }
-
-    /* Mode Switching Tabs */
-    .mode-switch {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 8px;
-    }
-    .mode-btn {
-      flex: 1;
-      padding: 9px 4px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      font-size: 10px;
-      font-weight: bold;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      letter-spacing: 0.5px;
-    }
-    .mode-btn.active {
-      background: var(--slate-dark);
-      color: var(--white);
-      border-color: var(--slate-dark);
-      box-shadow: 0 0 0 1px var(--accent);
-    }
-
-    /* Form Fields */
-    .field-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-bottom: 10px;
-    }
-    .field-label {
-      font-size: 9px;
-      font-weight: bold;
-      color: var(--text-muted);
-      letter-spacing: 0.5px;
-    }
-    input[type="file"] {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      padding: 6px;
-      font-size: 10px;
-      color: var(--text-main);
-      outline: none;
-      cursor: pointer;
-    }
-
-    .dropdown {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      padding: 7px;
-      font-size: 10px;
-      color: var(--text-main);
-      font-family: var(--font-mono);
-      font-weight: bold;
-      outline: none;
-      cursor: pointer;
-    }
-
-    /* Action Execution Button */
-    .exec-btn {
-      background: var(--accent);
-      color: var(--white);
-      border: 1px solid var(--accent);
-      padding: 14px;
-      font-size: 11px;
-      font-weight: bold;
-      letter-spacing: 1.5px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      margin-top: auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-    }
-    .exec-btn:hover {
-      filter: brightness(1.15);
-    }
-    .exec-btn:disabled {
-      background: var(--border);
-      border-color: var(--border);
-      cursor: not-allowed;
-      filter: grayscale(1);
-    }
-
-    /* Center Vector Gauge Deck */
-    .center-deck {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px;
-      position: relative;
-    }
-    .gauges-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      width: 100%;
-      margin: auto 0;
-      flex-wrap: wrap;
-    }
-    .gauge-wrapper {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .gauge-tag {
-      position: absolute;
-      top: -12px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      font-size: 8px;
-      padding: 1px 4px;
-      font-weight: bold;
-    }
-    .center-hud-tag {
-      background: var(--accent);
-      color: var(--white);
-      padding: 3px 16px;
-      font-size: 11px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-    }
-
-    /* Telemetry Panel */
-    .telemetry-header {
-      background: var(--slate-dark);
-      color: var(--white);
-      padding: 6px 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 10px;
-      font-weight: bold;
-    }
-    .r4-badge {
-      background: var(--accent);
-      color: var(--white);
-      padding: 2px 6px;
-      font-size: 9px;
-    }
-    #terminal {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      padding: 10px;
-      height: 290px;
-      overflow-y: auto;
-      font-size: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .log-line {
-      line-height: 1.35;
-      border-bottom: 1px dotted rgba(141, 155, 174, 0.3);
-      padding-bottom: 2px;
-    }
-    .log-line.warn { color: var(--accent); font-weight: bold; }
-    .log-line.success { color: var(--slate-dark); font-weight: bold; }
-
-    /* Footer */
-    footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 9px;
-      color: var(--text-muted);
-      border-top: 1px solid var(--border);
-      padding-top: 6px;
-    }
-  </style>
+  <script src="engine.js"></script>
 </head>
 <body>
 
-  <!-- Top Technical HUD Header -->
   <header class="hud-frame">
     <div class="header-left">
       <span>■ 360 WAVE DEV TOOL 11</span>
       <span style="color: var(--border);">|</span>
-      <span>SYS.VER: 5.0.0-CROSS-WEB</span>
+      <span>SYS.VER: 6.0.0-DECOUPLED</span>
       <span style="color: var(--border);">|</span>
       <span id="theme-tag">PALETTE: DYNAMIC</span>
     </div>
     <div class="tech-badge" id="telemetry-time">STAT.RG // 00:00:00:000</div>
   </header>
 
-  <!-- Main HUD Layout -->
   <div class="main-grid">
 
-    <!-- Column 1: Configuration & File Ingestion -->
+    <!-- Column 1: UI Ingestion Controls -->
     <div class="column">
       <div class="hud-frame" style="padding: 14px; flex: 1; display: flex; flex-direction: column;">
         <div class="card-title">
@@ -332,111 +36,119 @@
           <button id="mode-organizer" class="mode-btn" onclick="switchMode('organizer')">SKU ORGANIZER</button>
         </div>
 
-        <!-- PDF Renamer Mode Form -->
         <div id="renamer-fields">
           <div class="field-group">
             <label class="field-label">1. SOURCE PDF DIRECTORY / FILES:</label>
             <input type="file" id="renamerPdfFiles" multiple accept=".pdf" />
           </div>
           <div class="field-group">
-            <label class="field-label">2. MAPPING CSV TABLE (mapped_sku, batch_job_id):</label>
+            <label class="field-label">2. MAPPING CSV TABLE:</label>
             <input type="file" id="renamerCsvFile" accept=".csv" />
           </div>
-          <div class="field-group" style="flex-direction: row; gap: 8px; margin-top: 6px;">
-            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px; cursor: pointer;">
-              <input type="checkbox" id="simCheck" /> SIMULATE (DRY-RUN)
+          <div class="field-group" style="flex-direction: row; gap: 8px;">
+            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px;">
+              <input type="checkbox" id="simCheck" /> DRY-RUN (SIMULATE)
             </label>
           </div>
         </div>
 
-        <!-- SKU Organizer Mode Form -->
         <div id="organizer-fields" style="display: none;">
           <div class="field-group">
             <label class="field-label">1. SOURCE FILES TO CATEGORIZE:</label>
             <input type="file" id="orgTargetFiles" multiple />
           </div>
           <div class="field-group">
-            <label class="field-label">2. SELECT SKU REPOSITORY CATEGORY:</label>
+            <label class="field-label">2. SKU FOLDER CATEGORY:</label>
             <select id="skuSelect" class="dropdown">
-              <option value="Organizer_SKU">Organizer_SKU (Auto-Fetch from Repo)</option>
-              <option value="RB_SKU">RB_SKU (Auto-Fetch from Repo)</option>
-              <option value="WOYC_SOC6_SKU">WOYC_SOC6_SKU (Auto-Fetch from Repo)</option>
-              <option value="custom">-- UPLOAD LOCAL SKU CSVs --</option>
+              <option value="WOYC_SOC6_SKU">WOYC_SOC6_SKU</option>
+              <option value="Organizer_SKU">Organizer_SKU</option>
+              <option value="custom">-- UPLOAD CSV FILES MANUALLY --</option>
             </select>
           </div>
-          <div class="field-group" id="customCsvGroup" style="display: none;">
-            <label class="field-label">3. UPLOAD LOCAL SKU CSV FILE(S):</label>
+          <button type="button" class="btn-secondary" onclick="openSkuEditor()">✎ VIEW / ADD / EDIT SKU RULES</button>
+
+          <div class="field-group" id="customCsvGroup" style="display: none; margin-top: 6px;">
+            <label class="field-label">3. UPLOAD CUSTOM CSV LIST(S):</label>
             <input type="file" id="orgCustomCsvFiles" multiple accept=".csv" />
           </div>
-          <div class="field-group" style="margin-top: 4px;">
-            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+
+          <div class="field-group" style="margin-top: 6px;">
+            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px;">
               <input type="checkbox" id="renameCountCheck" checked /> RENAME FINAL FOLDER WITH COUNT
             </label>
           </div>
         </div>
 
-        <button id="execBtn" class="exec-btn" onclick="executeProcess()">
+        <button id="execBtn" class="exec-btn" onclick="triggerExecution()">
           <span>► EXECUTE PIPELINE & DOWNLOAD ZIP</span>
         </button>
       </div>
     </div>
 
-    <!-- Column 2: Center Vector Dial Deck -->
+    <!-- Column 2: Visual Gauges Deck -->
     <div class="hud-frame center-deck">
-      <div class="center-hud-tag">STAT.RG // ACTIVE COCKPIT</div>
+      <div style="background: var(--accent); color: var(--white); padding: 3px 16px; font-size: 11px; font-weight: bold;">
+        STAT.RG // ACTIVE COCKPIT
+      </div>
 
       <div class="gauges-row">
         <div class="gauge-wrapper">
-          <div class="gauge-tag">STAT.RG</div>
           <canvas id="gauge1" width="180" height="180"></canvas>
           <span style="font-size: 9px; font-weight: bold; margin-top: 4px; color: var(--text-muted);">MATCH METRIC</span>
         </div>
-
         <div class="gauge-wrapper">
-          <div class="gauge-tag">260.1 CORE</div>
           <canvas id="gauge2" width="220" height="220"></canvas>
           <span style="font-size: 9px; font-weight: bold; margin-top: 4px; color: var(--text-muted);">BATCH PROGRESS</span>
         </div>
-
         <div class="gauge-wrapper">
-          <div class="gauge-tag">MDR02</div>
           <canvas id="gauge3" width="180" height="180"></canvas>
-          <span style="font-size: 9px; font-weight: bold; margin-top: 4px; color: var(--text-muted);">OUTPUT STATUS</span>
+          <span style="font-size: 9px; font-weight: bold; margin-top: 4px; color: var(--text-muted);">STATUS</span>
         </div>
       </div>
 
       <div style="display: flex; justify-content: space-between; width: 100%; font-size: 9px; color: var(--text-muted); border-top: 1px dashed var(--border); padding-top: 6px;">
         <span>CORE 01: NOMINAL</span>
-        <span>STREAM: CLIENT-ISOLATED</span>
+        <span>ARCHITECTURE: MVC-DECOUPLED</span>
         <span>SCHEDULER: ASYNC-IO</span>
       </div>
     </div>
 
-    <!-- Column 3: Telemetry Stream -->
+    <!-- Column 3: Output Telemetry Panel -->
     <div class="column">
       <div class="hud-frame" style="padding: 10px; flex: 1; display: flex; flex-direction: column;">
         <div class="telemetry-header">
           <span>R4 LIST // TELEMETRY</span>
-          <span class="r4-badge">02-05 // X</span>
+          <span style="background: var(--accent); padding: 2px 6px; font-size: 9px;">LIVE</span>
         </div>
         <div id="terminal">
-          <div class="log-line">> HUD COCKPIT INGESTION ONLINE.</div>
-          <div class="log-line">> AWAITING DISK ASSETS...</div>
+          <div class="log-line">> HUD COCKPIT ONLINE.</div>
         </div>
       </div>
     </div>
 
   </div>
 
-  <!-- Bottom Bar -->
-  <footer>
-    <span>TACTICAL BATCH ENGINE // ALL BROWSERS & OS SUPPORTED</span>
-    <span>STATUS: READY</span>
-    <span>ENCRYPTED IN-MEMORY EXECUTION</span>
-  </footer>
+  <!-- SKU Modal -->
+  <div id="editorModal">
+    <div class="modal-box hud-frame">
+      <div class="card-title">
+        <span>✎ IN-MEMORY SKU LIST EDITOR</span>
+        <span style="cursor: pointer; color: var(--accent);" onclick="closeSkuEditor()">[X]</span>
+      </div>
+      <label class="field-label">CATEGORY RULES (1 SKU PER LINE):</label>
+      <textarea id="modalSkuText" style="height: 220px;" placeholder="Paste or type SKUs here..."></textarea>
+      <div style="display: flex; gap: 6px; justify-content: flex-end;">
+        <button class="btn-secondary" onclick="closeSkuEditor()">CANCEL</button>
+        <button class="btn-secondary" style="background: var(--accent); color: var(--white);" onclick="saveSkuEditor()">APPLY TO SESSION</button>
+      </div>
+    </div>
+  </div>
 
+  <!-- View Controller Script -->
   <script>
-    /* Dynamic HSV Random Color Theme Generator */
+    let globalAccent = '#FF5500';
+
+    /* Color Palette Randomizer */
     function hsvToHex(h, s, v) {
       let r, g, b, i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
       switch (i % 6) {
@@ -451,30 +163,20 @@
       return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
     }
 
-    let globalAccent = '#FF5500';
-
     function randomizeTheme() {
       const accentHue = Math.random();
       const bgHue = (accentHue + 0.5) % 1.0;
-
       globalAccent = hsvToHex(accentHue, 0.95, 0.95);
-      const bg = hsvToHex(bgHue, 0.12, 0.90);
-      const panel = hsvToHex(bgHue, 0.18, 0.82);
-      const border = hsvToHex(bgHue, 0.25, 0.65);
-      const slateDark = hsvToHex(bgHue, 0.40, 0.18);
-
       const r = document.documentElement.style;
       r.setProperty('--accent', globalAccent);
-      r.setProperty('--bg', bg);
-      r.setProperty('--panel', panel);
-      r.setProperty('--border', border);
-      r.setProperty('--slate-dark', slateDark);
-
+      r.setProperty('--bg', hsvToHex(bgHue, 0.12, 0.90));
+      r.setProperty('--panel', hsvToHex(bgHue, 0.18, 0.82));
+      r.setProperty('--border', hsvToHex(bgHue, 0.25, 0.65));
+      r.setProperty('--slate-dark', hsvToHex(bgHue, 0.40, 0.18));
       document.getElementById('theme-tag').textContent = `PALETTE: HUE-${Math.round(accentHue * 360)}`;
     }
     randomizeTheme();
 
-    /* Real-Time Telemetry Clock */
     setInterval(() => {
       const d = new Date();
       const pad = (n, s=2) => String(n).padStart(s, '0');
@@ -482,8 +184,24 @@
         `STAT.RG // ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}:${pad(d.getMilliseconds(), 3)}`;
     }, 40);
 
-    /* Mode Selector Logic */
+    /* UI State & Engine Instance */
     let activeMode = 'renamer';
+
+    const engine = new BatchEngine({
+      onLog: (msg, type = '') => {
+        const term = document.getElementById('terminal');
+        const div = document.createElement('div');
+        div.className = `log-line ${type}`;
+        div.textContent = `> ${msg}`;
+        term.appendChild(div);
+        term.scrollTop = term.scrollHeight;
+      },
+      onProgress: ({ gauge1, gauge2, gauge3 }) => {
+        if (gauge1) renderGauge('gauge1', gauge1.ratio, gauge1.text, gauge1.label);
+        if (gauge2) renderGauge('gauge2', gauge2.ratio, gauge2.text, gauge2.label);
+        if (gauge3) renderGauge('gauge3', gauge3.ratio, gauge3.text, gauge3.label);
+      }
+    });
 
     function switchMode(mode) {
       activeMode = mode;
@@ -491,28 +209,33 @@
       document.getElementById('mode-organizer').classList.toggle('active', mode === 'organizer');
       document.getElementById('renamer-fields').style.display = (mode === 'renamer') ? 'block' : 'none';
       document.getElementById('organizer-fields').style.display = (mode === 'organizer') ? 'block' : 'none';
-      log(`[*] PIPELINE ROUTE CHANGED -> ${mode.toUpperCase()}`);
+      engine.onLog(`[*] MODE CHANGED -> ${mode.toUpperCase()}`);
     }
 
     document.getElementById('skuSelect').addEventListener('change', (e) => {
       document.getElementById('customCsvGroup').style.display = (e.target.value === 'custom') ? 'block' : 'none';
     });
 
-    function log(msg, type = '') {
-      const term = document.getElementById('terminal');
-      const div = document.createElement('div');
-      div.className = `log-line ${type}`;
-      div.textContent = `> ${msg}`;
-      term.appendChild(div);
-      term.scrollTop = term.scrollHeight;
+    function openSkuEditor() {
+      const cat = document.getElementById('skuSelect').value;
+      document.getElementById('modalSkuText').value = engine.getSkuOverride(cat);
+      document.getElementById('editorModal').style.display = 'flex';
+    }
+    function closeSkuEditor() {
+      document.getElementById('editorModal').style.display = 'none';
+    }
+    function saveSkuEditor() {
+      const cat = document.getElementById('skuSelect').value;
+      engine.setSkuOverride(cat, document.getElementById('modalSkuText').value);
+      engine.onLog(`[✓] SKU OVERRIDE APPLIED FOR ${cat}`);
+      closeSkuEditor();
     }
 
-    /* Vector Radial Gauges */
+    /* Vector Gauge Drawing */
     function renderGauge(canvasId, ratio, primaryLabel, subLabel) {
       const cvs = document.getElementById(canvasId);
       const ctx = cvs.getContext('2d');
       ctx.clearRect(0, 0, cvs.width, cvs.height);
-
       const cx = cvs.width / 2, cy = cvs.height / 2, r = (cvs.width / 2) - 16;
 
       for (let deg = 0; deg < 360; deg += 15) {
@@ -545,7 +268,6 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(primaryLabel, cx, cy - 4);
-
       if (subLabel) {
         ctx.fillStyle = '#64748B';
         ctx.font = 'bold 9px Consolas';
@@ -560,187 +282,29 @@
     }
     initGauges();
 
-    /* Universal Download Engine (Cross-Browser Compatible) */
-    function triggerDownload(blob, filename) {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-
-      setTimeout(() => {
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      }, 2000);
-    }
-
-    /* Batch Processing Engine */
-    async function executeProcess() {
+    async function triggerExecution() {
       const execBtn = document.getElementById('execBtn');
       execBtn.disabled = true;
 
       try {
         if (activeMode === 'renamer') {
-          await runRenamerPipeline();
+          await engine.runRenamer({
+            pdfFiles: document.getElementById('renamerPdfFiles').files,
+            csvFile: document.getElementById('renamerCsvFile').files[0],
+            simulate: document.getElementById('simCheck').checked
+          });
         } else {
-          await runOrganizerPipeline();
+          await engine.runOrganizer({
+            targetFiles: document.getElementById('orgTargetFiles').files,
+            skuCategory: document.getElementById('skuSelect').value,
+            customCsvFiles: document.getElementById('orgCustomCsvFiles').files,
+            renameCount: document.getElementById('renameCountCheck').checked
+          });
         }
       } catch (err) {
-        log(`CRITICAL ABORT: ${err.message}`, 'warn');
+        engine.onLog(`ABORT: ${err.message}`, 'warn');
       } finally {
         execBtn.disabled = false;
-      }
-    }
-
-    /* Embedded PDF Renamer Engine */
-    async function runRenamerPipeline() {
-      const pdfFiles = document.getElementById('renamerPdfFiles').files;
-      const csvFile = document.getElementById('renamerCsvFile').files[0];
-      const simulate = document.getElementById('simCheck').checked;
-
-      if (!pdfFiles.length || !csvFile) {
-        throw new Error("Select both PDF files and mapping CSV file.");
-      }
-
-      log(`PARSING CSV MAP: ${csvFile.name}`);
-      const text = await csvFile.text();
-      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-
-      const skuIdx = headers.indexOf('mapped_sku');
-      const bidIdx = headers.indexOf('batch_job_id');
-
-      if (skuIdx === -1 || bidIdx === -1) {
-        throw new Error("CSV must contain 'mapped_sku' and 'batch_job_id' headers.");
-      }
-
-      const map = {};
-      for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(',');
-        const bid = (row[bidIdx] || '').trim();
-        const sku = (row[skuIdx] || '').trim();
-        if (bid) map[bid] = sku;
-      }
-
-      const zip = new JSZip();
-      let renamed = 0, noSku = 0;
-
-      for (let i = 0; i < pdfFiles.length; i++) {
-        const file = pdfFiles[i];
-        const stem = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-        const ext = file.name.substring(file.name.lastIndexOf('.'));
-        const lookup = stem.includes('-') ? stem.split('-')[0].trim() : stem;
-
-        if (map[lookup] && map[lookup].length > 0) {
-          const newName = `${map[lookup]} ${stem}${ext}`;
-          if (!simulate) zip.file(newName, file);
-          renamed++;
-          log(`COPY: '${file.name}' -> '${newName}'`);
-        } else {
-          if (!simulate) zip.folder('NO_SKU').file(file.name, file);
-          noSku++;
-          log(`COPY to NO_SKU: '${file.name}'`);
-        }
-
-        const prog = (i + 1) / pdfFiles.length;
-        renderGauge('gauge1', renamed / pdfFiles.length, `${renamed}/${pdfFiles.length}`, 'MATCHED');
-        renderGauge('gauge2', prog, `${i + 1}/${pdfFiles.length}`, 'PROCESSED');
-      }
-
-      if (!simulate) {
-        log("PACKAGING AND DOWNLOADING ZIP ARCHIVE...");
-        const blob = await zip.generateAsync({ type: 'blob' });
-        triggerDownload(blob, `Renamed_PDF_Export_${Date.now()}.zip`);
-      }
-      log(`RENAMER COMPLETE: Renamed: ${renamed}, NO_SKU: ${noSku}`, 'success');
-    }
-
-    /* Embedded SKU Organizer Engine */
-    async function runOrganizerPipeline() {
-      const targetFiles = document.getElementById('orgTargetFiles').files;
-      const skuMode = document.getElementById('skuSelect').value;
-      const renameCount = document.getElementById('renameCountCheck').checked;
-
-      if (!targetFiles.length) {
-        throw new Error("Select source files to categorize.");
-      }
-
-      let csvMapEntries = [];
-
-      if (skuMode === 'custom') {
-        const customFiles = document.getElementById('orgCustomCsvFiles').files;
-        if (!customFiles.length) throw new Error("Upload at least one custom SKU CSV file.");
-        for (const file of customFiles) {
-          const content = await file.text();
-          csvMapEntries.push({ name: file.name.replace(/\.csv$/i, ''), content });
-        }
-      } else {
-        log(`FETCHING SKU PRESET: SKU/${skuMode}/SKU_Mapping.csv...`);
-        try {
-          const res = await fetch(`SKU/${skuMode}/SKU_Mapping.csv`);
-          if (!res.ok) throw new Error("Not found");
-          const content = await res.text();
-          csvMapEntries.push({ name: skuMode, content });
-        } catch (e) {
-          log(`[!] Preset not found on GitHub. Switch to '-- UPLOAD LOCAL SKU CSVs --' to provide custom files.`, 'warn');
-          throw new Error(`SKU file 'SKU/${skuMode}/SKU_Mapping.csv' not found in repo.`);
-        }
-      }
-
-      const zip = new JSZip();
-      const filesArr = Array.from(targetFiles);
-      const moved = new Set();
-      let totalMoved = 0;
-
-      for (let i = 0; i < csvMapEntries.length; i++) {
-        const { name, content } = csvMapEntries[i];
-        const skus = new Set(content.split(/[\r\n,]+/).map(s => s.trim()).filter(Boolean));
-        let count = 0;
-        const matchedFiles = [];
-
-        for (const file of filesArr) {
-          if (moved.has(file.name)) continue;
-          const stem = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-
-          let matched = false;
-          if (skus.has(stem)) matched = true;
-          else if (stem.includes(' ') && skus.has(stem.split(' ')[0])) matched = true;
-          else if (stem.includes('_') && skus.has(stem.split('_')[0])) matched = true;
-          else {
-            for (const sku of skus) {
-              if (stem.startsWith(sku)) { matched = true; break; }
-            }
-          }
-
-          if (matched) {
-            matchedFiles.push(file);
-            moved.add(file.name);
-            count++;
-            totalMoved++;
-            log(`ORGANIZED [${name}]: ${file.name}`);
-          }
-        }
-
-        if (matchedFiles.length > 0) {
-          const folderName = renameCount ? `${name}_${count}` : name;
-          const targetDir = zip.folder(folderName);
-          matchedFiles.forEach(f => targetDir.file(f.name, f));
-        }
-
-        renderGauge('gauge2', (i + 1) / csvMapEntries.length, `${i + 1}/${csvMapEntries.length}`, 'LISTS');
-      }
-
-      renderGauge('gauge1', totalMoved / filesArr.length, `${totalMoved}/${filesArr.length}`, 'ORGANIZED');
-
-      if (totalMoved > 0) {
-        log("PACKAGING AND DOWNLOADING ZIP ARCHIVE...");
-        const blob = await zip.generateAsync({ type: 'blob' });
-        triggerDownload(blob, `Organized_${skuMode}_${totalMoved}.zip`);
-        log(`DONE: Organized ${totalMoved} files across ${csvMapEntries.length} categories.`, 'success');
-      } else {
-        log("DONE: No matching files found for the provided SKU list(s).", 'warn');
       }
     }
   </script>
