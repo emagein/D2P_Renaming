@@ -3,155 +3,233 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tactical Glassmorphic Batch Engine</title>
+  <title>360 WAVE DEV TOOL // HUD BATCH ENGINE</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="engine.js"></script>
+  <style>
+    .editor-layout {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 10px;
+      height: 280px;
+    }
+    .tree-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 6px;
+      overflow-y: auto;
+      font-size: 10px;
+    }
+    .tree-item {
+      padding: 4px;
+      cursor: pointer;
+      border-radius: 2px;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tree-item:hover { background: var(--border-light); }
+    .tree-item.active { background: var(--slate-dark); color: var(--white); }
+  </style>
 </head>
 <body>
 
-  <!-- Top Animated Pill Badge -->
-  <div class="top-pill-badge">Animated badge // Tactical HUD</div>
+  <header class="hud-frame">
+    <div class="header-left">
+      <span>■ 360 WAVE DEV TOOL 11</span>
+      <span style="color: var(--border);">|</span>
+      <span>SYS.VER: 7.0.0-PRO</span>
+      <span style="color: var(--border);">|</span>
+      <span id="theme-tag">PALETTE: DYNAMIC</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="btn-secondary" style="color: var(--accent); border-color: var(--accent); padding: 3px 8px;" onclick="resetCache()">⟲ RESET / CLEAR CACHE</button>
+      <div class="tech-badge" id="telemetry-time">STAT.RG // 00:00:00:000</div>
+    </div>
+  </header>
 
-  <div class="dashboard-grid">
+  <div class="main-grid">
 
-    <!-- Column 1: Control Panel -->
-    <div class="glass-panel" style="padding: 16px; display: flex; flex-direction: column;">
-      <div class="control-header">
-        <span class="control-title">Control panel</span>
-        <div style="display: flex; gap: 6px; align-items: center;">
-          <span style="font-size: 12px; color: var(--accent-orange); cursor: pointer;" onclick="resetCache()">⟲ Reset</span>
-          <span class="badge-count">7</span>
+    <!-- Column 1: UI Ingestion Controls -->
+    <div class="column">
+      <div class="hud-frame" style="padding: 14px; flex: 1; display: flex; flex-direction: column;">
+        <div class="card-title">
+          <span>┌─ MISSION PARAMETERS</span>
+          <span style="color: var(--accent);">M2D/SL</span>
         </div>
+
+        <div class="mode-switch">
+          <button id="mode-renamer" class="mode-btn active" onclick="switchMode('renamer')">PDF RENAMER</button>
+          <button id="mode-organizer" class="mode-btn" onclick="switchMode('organizer')">SKU ORGANIZER</button>
+        </div>
+
+        <!-- Renamer Inputs -->
+        <div id="renamer-fields">
+          <div class="field-group">
+            <label class="field-label">1. SOURCE PDF DIRECTORY / FILES:</label>
+            <input type="file" id="renamerPdfFiles" multiple accept=".pdf" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">2. MAPPING CSV TABLE:</label>
+            <input type="file" id="renamerCsvFile" accept=".csv" />
+          </div>
+          <div class="field-group" style="flex-direction: row; gap: 8px;">
+            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px;">
+              <input type="checkbox" id="simCheck" /> DRY-RUN (SIMULATE)
+            </label>
+          </div>
+        </div>
+
+        <!-- Organizer Inputs (Clean Top-Level Category Only) -->
+        <div id="organizer-fields" style="display: none;">
+          <div class="field-group">
+            <label class="field-label">1. SOURCE FILES TO CATEGORIZE:</label>
+            <input type="file" id="orgTargetFiles" multiple />
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">2. SELECT SKU TARGET FOLDER:</label>
+            <select id="skuSelect" class="dropdown">
+              <option value="WOYC_SOC6_SKU">WOYC_SOC6_SKU</option>
+              <option value="Organizer_SKU">Organizer_SKU</option>
+              <option value="custom">-- UPLOAD CSV FILES MANUALLY --</option>
+            </select>
+          </div>
+
+          <button type="button" class="btn-secondary" style="margin-bottom: 6px;" onclick="openSkuEditor()">✎ VIEW / ADD / EDIT SKU RULES</button>
+
+          <div class="field-group" id="customCsvGroup" style="display: none;">
+            <label class="field-label">3. UPLOAD CUSTOM CSV LIST(S):</label>
+            <input type="file" id="orgCustomCsvFiles" multiple accept=".csv" />
+          </div>
+
+          <div class="field-group" style="margin-top: 4px;">
+            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px;">
+              <input type="checkbox" id="renameCountCheck" checked /> RENAME FINAL SUBFOLDER WITH COUNT
+            </label>
+          </div>
+        </div>
+
+        <button id="execBtn" class="exec-btn" onclick="triggerExecution()">
+          <span>► EXECUTE PIPELINE & DOWNLOAD ZIP</span>
+        </button>
       </div>
-
-      <!-- Mode Switcher with Glowing Ring -->
-      <div class="mode-toggle">
-        <div class="flare-ring" id="flareRing" style="left: 6px;"></div>
-        <button id="mode-renamer" class="mode-btn active" onclick="switchMode('renamer')">PDF Renamer</button>
-        <button id="mode-organizer" class="mode-btn" onclick="switchMode('organizer')">SKU Organizer</button>
-      </div>
-
-      <!-- PDF Renamer Form -->
-      <div id="renamer-fields">
-        <div class="field-group">
-          <label class="field-label">1. SOURCE PDF DIRECTORY / FILES</label>
-          <input type="file" id="renamerPdfFiles" multiple accept=".pdf" />
-        </div>
-        <div class="field-group">
-          <label class="field-label">2. MAPPING CSV TABLE</label>
-          <input type="file" id="renamerCsvFile" accept=".csv" />
-        </div>
-        <div class="field-group" style="flex-direction: row; gap: 6px; margin: 4px 0;">
-          <label style="font-size: 11px; display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-muted);">
-            <input type="checkbox" id="simCheck" /> Dry-Run Simulation
-          </label>
-        </div>
-      </div>
-
-      <!-- SKU Organizer Form -->
-      <div id="organizer-fields" style="display: none;">
-        <div class="field-group">
-          <label class="field-label">1. SOURCE FILES TO CATEGORIZE</label>
-          <input type="file" id="orgTargetFiles" multiple />
-        </div>
-        <div class="field-group">
-          <label class="field-label">2. SELECT SKU TARGET FOLDER</label>
-          <select id="skuSelect" class="glass-select">
-            <option value="WOYC_SOC6_SKU">WOYC_SOC6_SKU (Ready for Processing)</option>
-            <option value="Organizer_SKU">Organizer_SKU</option>
-            <option value="custom">-- Upload Custom CSV Files --</option>
-          </select>
-        </div>
-        <div class="field-group" id="customCsvGroup" style="display: none;">
-          <label class="field-label">3. UPLOAD CUSTOM CSV(S)</label>
-          <input type="file" id="orgCustomCsvFiles" multiple accept=".csv" />
-        </div>
-      </div>
-
-      <!-- Interactive Rules Stack -->
-      <div style="margin-top: 6px; flex: 1;">
-        <div class="list-card active-card" onclick="openSkuEditor()">
-          <span style="font-size: 12px; font-weight: 600;">System Rules</span>
-          <span class="badge-count">Live</span>
-        </div>
-        <div class="list-card" onclick="openSkuEditor()">
-          <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">View / Edit Category SKUs</span>
-          <span style="font-size: 12px; color: var(--text-muted);">➔</span>
-        </div>
-      </div>
-
-      <button id="execBtn" class="exec-btn" onclick="triggerExecution()">
-        ► Execute Pipeline & Export ZIP
-      </button>
     </div>
 
-    <!-- Column 2: Visual Telemetry Deck -->
-    <div class="glass-panel center-display">
-      
-      <!-- Glowing Circular Dial Gauges -->
-      <div class="dials-container">
-        <div class="dial-box">
-          <canvas id="gauge1" width="160" height="160"></canvas>
+    <!-- Column 2: Vector Gauges Deck -->
+    <div class="hud-frame center-deck">
+      <div style="background: var(--accent); color: var(--white); padding: 3px 16px; font-size: 11px; font-weight: bold;">
+        STAT.RG // ACTIVE COCKPIT
+      </div>
+
+      <div class="gauges-row">
+        <div class="gauge-wrapper">
+          <canvas id="gauge1" width="180" height="180"></canvas>
+          <span style="font-size: 9px; font-weight: bold; margin-top: 4px; color: var(--text-muted);">MATCH METRIC</span>
         </div>
-        <div class="dial-box">
-          <canvas id="gauge2" width="160" height="160"></canvas>
+        <div class="gauge-wrapper">
+          <canvas id="gauge2" width="220" height="220"></canvas>
+          <span style="font-size: 9px; font-weight: bold; margin-top: 4px; color: var(--text-muted);">BATCH PROGRESS</span>
+        </div>
+        <div class="gauge-wrapper">
+          <canvas id="gauge3" width="180" height="180"></canvas>
+          <span style="font-size: 9px; font-weight: bold; margin-top: 4px; color: var(--text-muted);">STATUS</span>
         </div>
       </div>
 
-      <!-- Animated Dual Sine Waves Graph -->
-      <div style="width: 100%; height: 110px; position: relative;">
-        <canvas id="waveCanvas" style="width: 100%; height: 100%;"></canvas>
+      <div style="display: flex; justify-content: space-between; width: 100%; font-size: 9px; color: var(--text-muted); border-top: 1px dashed var(--border); padding-top: 6px;">
+        <span>CORE 01: NOMINAL</span>
+        <span>CACHE: ACTIVE</span>
+        <span>SCHEDULER: ASYNC-IO</span>
       </div>
-
-      <!-- Floating Glowing Applied Filters Slider Card -->
-      <div class="filter-slider-box">
-        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600;">
-          <span>Apply Filters</span>
-          <span id="progressText" style="color: var(--accent-orange);">Ready</span>
-        </div>
-        <div class="glow-track">
-          <div class="glow-bar" id="progressBar" style="width: 0%;"></div>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
-          <span>Share</span>
-          <span>Register</span>
-        </div>
-      </div>
-
     </div>
 
-    <!-- Column 3: Terminal Console -->
-    <div class="glass-panel telemetry-card">
-      <div class="telemetry-title">> telemetry-header</div>
-      <div id="terminal">
-        <div class="log-line">> terminal header: -d</div>
-        <div class="log-line">> creating processes: 12823306380</div>
-        <div class="log-line">> total resources: 425 mins day</div>
-        <div class="log-line">> totem graphics: 132.8.8.62</div>
-        <div class="log-line">> toten controlficuls womang: █</div>
+    <!-- Column 3: Telemetry Stream -->
+    <div class="column">
+      <div class="hud-frame" style="padding: 10px; flex: 1; display: flex; flex-direction: column;">
+        <div class="telemetry-header">
+          <span>R4 LIST // TELEMETRY</span>
+          <span style="background: var(--accent); padding: 2px 6px; font-size: 9px;">LIVE</span>
+        </div>
+        <div id="terminal">
+          <div class="log-line">> HUD COCKPIT ONLINE. CACHE LOADED.</div>
+        </div>
       </div>
     </div>
 
   </div>
 
-  <!-- SKU Modal Editor (Decoupled overlay) -->
-  <div id="editorModal" style="display: none; position: fixed; inset: 0; background: rgba(10,16,24,0.7); backdrop-filter: blur(8px); z-index: 99; justify-content: center; align-items: center;">
-    <div class="glass-panel" style="width: 580px; padding: 20px; display: flex; flex-direction: column; gap: 10px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 600; font-size: 14px;" id="modalTargetTitle">SKU Category Editor</span>
-        <span style="cursor: pointer; color: var(--accent-orange);" onclick="closeSkuEditor()">✕</span>
+  <!-- SKU Modal Editor with File Tree -->
+  <div id="editorModal">
+    <div class="modal-box hud-frame" style="width: 680px;">
+      <div class="card-title">
+        <span id="modalTargetTitle">✎ SKU RULES & REPOSITORY TREE</span>
+        <span style="cursor: pointer; color: var(--accent);" onclick="closeSkuEditor()">[X]</span>
       </div>
-      <textarea id="modalSkuText" style="height: 200px;" placeholder="Paste or edit SKUs here (one per line)..."></textarea>
-      <div style="display: flex; justify-content: flex-end; gap: 8px;">
-        <button class="mode-btn" onclick="closeSkuEditor()">Cancel</button>
-        <button class="exec-btn" style="padding: 6px 16px; margin: 0;" onclick="saveCurrentFileSku()">Save & Cache Rules</button>
+
+      <div class="editor-layout">
+        <!-- Tree Navigation -->
+        <div class="tree-box" id="fileTreeContainer">
+          <div style="font-weight: bold; margin-bottom: 4px; color: var(--text-muted);">FILES IN FOLDER:</div>
+          <div id="treeItems">Loading file hierarchy...</div>
+        </div>
+
+        <!-- Editor View -->
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <label class="field-label" id="activeEditingFileLabel">SELECT A FILE FROM THE TREE TO EDIT:</label>
+          <textarea id="modalSkuText" style="height: 100%;" placeholder="SKUs will appear here..."></textarea>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px;">
+        <button class="btn-secondary" onclick="closeSkuEditor()">CLOSE</button>
+        <button class="btn-secondary" style="background: var(--accent); color: var(--white);" onclick="saveCurrentFileSku()">SAVE & CACHE CHANGES</button>
       </div>
     </div>
   </div>
 
   <script>
+    let globalAccent = '#FF5500';
+
+    function hsvToHex(h, s, v) {
+      let r, g, b, i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - f * s), q = v * (1 - (1 - f) * s);
+      switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+      }
+      const toHex = x => Math.round(x * 255).toString(16).padStart(2, '0');
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    function randomizeTheme() {
+      const accentHue = Math.random();
+      const bgHue = (accentHue + 0.5) % 1.0;
+      globalAccent = hsvToHex(accentHue, 0.95, 0.95);
+      const r = document.documentElement.style;
+      r.setProperty('--accent', globalAccent);
+      r.setProperty('--bg', hsvToHex(bgHue, 0.12, 0.90));
+      r.setProperty('--panel', hsvToHex(bgHue, 0.18, 0.82));
+      r.setProperty('--border', hsvToHex(bgHue, 0.25, 0.65));
+      r.setProperty('--slate-dark', hsvToHex(bgHue, 0.40, 0.18));
+      document.getElementById('theme-tag').textContent = `PALETTE: HUE-${Math.round(accentHue * 360)}`;
+    }
+    randomizeTheme();
+
+    setInterval(() => {
+      const d = new Date();
+      const pad = (n, s=2) => String(n).padStart(s, '0');
+      document.getElementById('telemetry-time').textContent = 
+        `STAT.RG // ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}:${pad(d.getMilliseconds(), 3)}`;
+    }, 40);
+
     let activeMode = 'renamer';
+    let currentSelectedTreePath = '';
 
     const engine = new BatchEngine({
       onLog: (msg, type = '') => {
@@ -162,16 +240,23 @@
         term.appendChild(div);
         term.scrollTop = term.scrollHeight;
       },
-      onProgress: ({ gauge1, gauge2 }) => {
-        if (gauge1) renderGauge('gauge1', gauge1.ratio, gauge1.text, '#ff7b2b', '#ff3b30');
-        if (gauge2) {
-          renderGauge('gauge2', gauge2.ratio, gauge2.text, '#4ce1d8', '#0099ff');
-          const pct = Math.round(gauge2.ratio * 100);
-          document.getElementById('progressBar').style.width = `${pct}%`;
-          document.getElementById('progressText').textContent = `${pct}%`;
-        }
+      onProgress: ({ gauge1, gauge2, gauge3 }) => {
+        if (gauge1) renderGauge('gauge1', gauge1.ratio, gauge1.text, gauge1.label);
+        if (gauge2) renderGauge('gauge2', gauge2.ratio, gauge2.text, gauge2.label);
+        if (gauge3) renderGauge('gauge3', gauge3.ratio, gauge3.text, gauge3.label);
       }
     });
+
+    function resetCache() {
+      if (confirm("Clear local cache and reset rules to repository defaults?")) {
+        engine.clearCache();
+        document.getElementById('renamerPdfFiles').value = "";
+        document.getElementById('renamerCsvFile').value = "";
+        document.getElementById('orgTargetFiles').value = "";
+        if (document.getElementById('orgCustomCsvFiles')) document.getElementById('orgCustomCsvFiles').value = "";
+        initGauges();
+      }
+    }
 
     function switchMode(mode) {
       activeMode = mode;
@@ -179,144 +264,134 @@
       document.getElementById('mode-organizer').classList.toggle('active', mode === 'organizer');
       document.getElementById('renamer-fields').style.display = (mode === 'renamer') ? 'block' : 'none';
       document.getElementById('organizer-fields').style.display = (mode === 'organizer') ? 'block' : 'none';
-
-      const flare = document.getElementById('flareRing');
-      flare.style.left = (mode === 'renamer') ? '6px' : 'calc(100% - 50px)';
-      engine.onLog(`[*] PIPELINE ROUTE: ${mode.toUpperCase()}`);
+      engine.onLog(`[*] MODE CHANGED -> ${mode.toUpperCase()}`);
     }
 
     document.getElementById('skuSelect').addEventListener('change', (e) => {
       document.getElementById('customCsvGroup').style.display = (e.target.value === 'custom') ? 'block' : 'none';
     });
 
-    function openSkuEditor() {
-      const cat = document.getElementById('skuSelect').value;
-      document.getElementById('modalTargetTitle').textContent = `SKU Rules: ${cat}`;
-      document.getElementById('modalSkuText').value = engine.getSkuOverride(cat);
+    async function openSkuEditor() {
+      const selectedCategory = document.getElementById('skuSelect').value;
+      document.getElementById('modalTargetTitle').textContent = `✎ SKU RULES FOR: ${selectedCategory}`;
       document.getElementById('editorModal').style.display = 'flex';
+      loadFolderTree(selectedCategory);
     }
+
+    async function loadFolderTree(category) {
+      const treeContainer = document.getElementById('treeItems');
+      treeContainer.innerHTML = 'Loading files...';
+
+      let files = [];
+      try {
+        const res = await fetch(`https://api.github.com/repos/emagein/D2P_Renaming/contents/SKU/${category}`);
+        if (res.ok) {
+          const data = await res.json();
+          files = data.filter(d => d.name.endsWith('.csv')).map(d => ({ name: d.name, path: `${category}/${d.name}`, url: d.download_url }));
+        }
+      } catch (e) {}
+
+      if (!files.length) {
+        files = [{ name: 'SKU_Mapping.csv', path: `${category}/SKU_Mapping.csv`, url: '' }];
+      }
+
+      treeContainer.innerHTML = '';
+      files.forEach((f, idx) => {
+        const div = document.createElement('div');
+        div.className = `tree-item ${idx === 0 ? 'active' : ''}`;
+        div.textContent = `📄 ${f.name}`;
+        div.onclick = () => selectFileFromTree(f, div);
+        treeContainer.appendChild(div);
+      });
+
+      if (files.length > 0) {
+        selectFileFromTree(files[0], treeContainer.firstChild);
+      }
+    }
+
+    async function selectFileFromTree(fileObj, elem) {
+      document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+      if (elem) elem.classList.add('active');
+
+      currentSelectedTreePath = fileObj.path;
+      document.getElementById('activeEditingFileLabel').textContent = `EDITING FILE: ${fileObj.name}`;
+
+      let content = engine.getSkuOverride(fileObj.path);
+      if (!content && fileObj.url) {
+        try {
+          const res = await fetch(fileObj.url);
+          if (res.ok) content = await res.text();
+        } catch (e) {}
+      }
+      document.getElementById('modalSkuText').value = content;
+    }
+
+    function saveCurrentFileSku() {
+      if (!currentSelectedTreePath) return;
+      const text = document.getElementById('modalSkuText').value;
+      engine.setSkuOverride(currentSelectedTreePath, text);
+      engine.onLog(`[✓] SAVED SKU RULES FOR ${currentSelectedTreePath}`);
+      closeSkuEditor();
+    }
+
     function closeSkuEditor() {
       document.getElementById('editorModal').style.display = 'none';
     }
-    function saveCurrentFileSku() {
-      const cat = document.getElementById('skuSelect').value;
-      engine.setSkuOverride(cat, document.getElementById('modalSkuText').value);
-      engine.onLog(`[✓] SKU OVERRIDE SAVED FOR ${cat}`);
-      closeSkuEditor();
-    }
-    function resetCache() {
-      if (confirm("Reset cache and reload repository defaults?")) {
-        engine.clearCache();
-        initDials();
-      }
-    }
 
-    /* Glowing Circular Dial Gauges */
-    function renderGauge(canvasId, ratio, label, startColor, endColor) {
+    function renderGauge(canvasId, ratio, primaryLabel, subLabel) {
       const cvs = document.getElementById(canvasId);
       const ctx = cvs.getContext('2d');
       ctx.clearRect(0, 0, cvs.width, cvs.height);
+      const cx = cvs.width / 2, cy = cvs.height / 2, r = (cvs.width / 2) - 16;
 
-      const cx = cvs.width / 2, cy = cvs.height / 2, r = 58;
+      for (let deg = 0; deg < 360; deg += 15) {
+        let rad = (deg * Math.PI) / 180;
+        let tLen = (deg % 45 === 0) ? 8 : 4;
+        ctx.beginPath();
+        ctx.moveTo(cx + (r + 4) * Math.cos(rad), cy + (r + 4) * Math.sin(rad));
+        ctx.lineTo(cx + (r + 4 + tLen) * Math.cos(rad), cy + (r + 4 + tLen) * Math.sin(rad));
+        ctx.strokeStyle = '#8D9BAE';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
 
-      // Outer track
       ctx.beginPath();
-      ctx.arc(cx, cy, r, Math.PI * 0.75, Math.PI * 2.25);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-      ctx.lineWidth = 10;
-      ctx.lineCap = 'round';
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = '#8D9BAE';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Glowing active progress arc
       if (ratio > 0) {
-        ctx.save();
         ctx.beginPath();
-        const startAngle = Math.PI * 0.75;
-        const endAngle = startAngle + (Math.PI * 1.5 * Math.min(1.0, ratio));
-        ctx.arc(cx, cy, r, startAngle, endAngle);
-
-        const grad = ctx.createLinearGradient(0, 0, cvs.width, cvs.height);
-        grad.addColorStop(0, startColor);
-        grad.addColorStop(1, endColor);
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 10;
-        ctx.lineCap = 'round';
-        ctx.shadowColor = startColor;
-        ctx.shadowBlur = 14;
+        ctx.arc(cx, cy, r - 4, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * Math.min(1.0, ratio)));
+        ctx.strokeStyle = globalAccent;
+        ctx.lineWidth = 6;
         ctx.stroke();
-        ctx.restore();
       }
 
-      // Center Metric Text
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
+      ctx.fillStyle = '#0F172A';
+      ctx.font = 'bold 16px Consolas';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(label || '0', cx, cy - 2);
-
-      ctx.fillStyle = '#8ca3ba';
-      ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
-      ctx.fillText('0%', cx - 35, cy + 50);
-      ctx.fillText('100%', cx + 35, cy + 50);
-    }
-
-    function initDials() {
-      renderGauge('gauge1', 0.70, '70', '#ff7b2b', '#ff3b30');
-      renderGauge('gauge2', 0.61, '61', '#4ce1d8', '#0099ff');
-    }
-    initDials();
-
-    /* Animated Wave Sine Graph */
-    const waveCanvas = document.getElementById('waveCanvas');
-    const waveCtx = waveCanvas.getContext('2d');
-    let waveOffset = 0;
-
-    function resizeWave() {
-      waveCanvas.width = waveCanvas.parentElement.clientWidth;
-      waveCanvas.height = waveCanvas.parentElement.clientHeight;
-    }
-    window.addEventListener('resize', resizeWave);
-    resizeWave();
-
-    function drawWave() {
-      waveCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
-      const w = waveCanvas.width, h = waveCanvas.height;
-
-      // Draw Orange Sine Wave
-      waveCtx.beginPath();
-      for (let x = 0; x <= w; x++) {
-        let y = h / 2 + Math.sin((x * 0.02) + waveOffset) * 22;
-        if (x === 0) waveCtx.moveTo(x, y);
-        else waveCtx.lineTo(x, y);
+      ctx.fillText(primaryLabel, cx, cy - 4);
+      if (subLabel) {
+        ctx.fillStyle = '#64748B';
+        ctx.font = 'bold 9px Consolas';
+        ctx.fillText(subLabel, cx, cy + 12);
       }
-      waveCtx.strokeStyle = '#ff7b2b';
-      waveCtx.lineWidth = 2.5;
-      waveCtx.shadowColor = 'rgba(255, 123, 43, 0.7)';
-      waveCtx.shadowBlur = 10;
-      waveCtx.stroke();
-
-      // Draw Cyan Sine Wave
-      waveCtx.beginPath();
-      for (let x = 0; x <= w; x++) {
-        let y = h / 2 + Math.cos((x * 0.015) - waveOffset * 1.2) * 18 + 10;
-        if (x === 0) waveCtx.moveTo(x, y);
-        else waveCtx.lineTo(x, y);
-      }
-      waveCtx.strokeStyle = '#4ce1d8';
-      waveCtx.lineWidth = 2.5;
-      waveCtx.shadowColor = 'rgba(76, 225, 216, 0.7)';
-      waveCtx.shadowBlur = 10;
-      waveCtx.stroke();
-
-      waveOffset += 0.03;
-      requestAnimationFrame(drawWave);
     }
-    drawWave();
 
-    /* Execute Dispatcher */
+    function initGauges() {
+      renderGauge('gauge1', 0.0, '0.00', 'MATCH.RATIO');
+      renderGauge('gauge2', 0.0, '0 / 0', 'BATCH.PROG');
+      renderGauge('gauge3', 1.0, '100%', 'NOMINAL');
+    }
+    initGauges();
+
     async function triggerExecution() {
       const execBtn = document.getElementById('execBtn');
       execBtn.disabled = true;
+
       try {
         if (activeMode === 'renamer') {
           await engine.runRenamer({
@@ -328,7 +403,8 @@
           await engine.runOrganizer({
             targetFiles: document.getElementById('orgTargetFiles').files,
             selectedCategory: document.getElementById('skuSelect').value,
-            customCsvFiles: document.getElementById('orgCustomCsvFiles') ? document.getElementById('orgCustomCsvFiles').files : []
+            customCsvFiles: document.getElementById('orgCustomCsvFiles') ? document.getElementById('orgCustomCsvFiles').files : [],
+            renameCount: document.getElementById('renameCountCheck').checked
           });
         }
       } catch (err) {
