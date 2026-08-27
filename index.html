@@ -8,6 +8,22 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="engine.js"></script>
   <style>
+    /* Ensure modal never blocks clicks when closed */
+    #editorModal {
+      display: none !important;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+    }
+    #editorModal.open {
+      display: flex !important;
+      pointer-events: auto;
+    }
     .editor-layout {
       display: grid;
       grid-template-columns: 180px 1fr;
@@ -22,13 +38,14 @@
       font-size: 10px;
     }
     .tree-item {
-      padding: 4px;
+      padding: 5px;
       cursor: pointer;
       border-radius: 2px;
       margin-bottom: 2px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      user-select: none;
     }
     .tree-item:hover { background: var(--border-light); }
     .tree-item.active { background: var(--slate-dark); color: var(--white); }
@@ -40,12 +57,12 @@
     <div class="header-left">
       <span>■ 360 WAVE DEV TOOL 11</span>
       <span style="color: var(--border);">|</span>
-      <span>SYS.VER: 7.0.0-PRO</span>
+      <span>SYS.VER: 7.1.0-STABLE</span>
       <span style="color: var(--border);">|</span>
       <span id="theme-tag">PALETTE: DYNAMIC</span>
     </div>
     <div style="display: flex; align-items: center; gap: 8px;">
-      <button class="btn-secondary" style="color: var(--accent); border-color: var(--accent); padding: 3px 8px;" onclick="resetCache()">⟲ RESET / CLEAR CACHE</button>
+      <button class="btn-secondary" style="color: var(--accent); border-color: var(--accent); padding: 3px 8px; cursor: pointer;" onclick="resetCache()">⟲ RESET / CLEAR CACHE</button>
       <div class="tech-badge" id="telemetry-time">STAT.RG // 00:00:00:000</div>
     </div>
   </header>
@@ -61,8 +78,8 @@
         </div>
 
         <div class="mode-switch">
-          <button id="mode-renamer" class="mode-btn active" onclick="switchMode('renamer')">PDF RENAMER</button>
-          <button id="mode-organizer" class="mode-btn" onclick="switchMode('organizer')">SKU ORGANIZER</button>
+          <button id="mode-renamer" type="button" class="mode-btn active" onclick="switchMode('renamer')">PDF RENAMER</button>
+          <button id="mode-organizer" type="button" class="mode-btn" onclick="switchMode('organizer')">SKU ORGANIZER</button>
         </div>
 
         <!-- Renamer Inputs -->
@@ -76,13 +93,13 @@
             <input type="file" id="renamerCsvFile" accept=".csv" />
           </div>
           <div class="field-group" style="flex-direction: row; gap: 8px;">
-            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px;">
+            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px; cursor: pointer;">
               <input type="checkbox" id="simCheck" /> DRY-RUN (SIMULATE)
             </label>
           </div>
         </div>
 
-        <!-- Organizer Inputs (Clean Top-Level Category Only) -->
+        <!-- Organizer Inputs -->
         <div id="organizer-fields" style="display: none;">
           <div class="field-group">
             <label class="field-label">1. SOURCE FILES TO CATEGORIZE:</label>
@@ -106,13 +123,13 @@
           </div>
 
           <div class="field-group" style="margin-top: 4px;">
-            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px;">
+            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px; cursor: pointer;">
               <input type="checkbox" id="renameCountCheck" checked /> RENAME FINAL SUBFOLDER WITH COUNT
             </label>
           </div>
         </div>
 
-        <button id="execBtn" class="exec-btn" onclick="triggerExecution()">
+        <button id="execBtn" type="button" class="exec-btn" onclick="triggerExecution()">
           <span>► EXECUTE PIPELINE & DOWNLOAD ZIP</span>
         </button>
       </div>
@@ -141,7 +158,7 @@
 
       <div style="display: flex; justify-content: space-between; width: 100%; font-size: 9px; color: var(--text-muted); border-top: 1px dashed var(--border); padding-top: 6px;">
         <span>CORE 01: NOMINAL</span>
-        <span>CACHE: ACTIVE</span>
+        <span>CACHE: PERSISTENT</span>
         <span>SCHEDULER: ASYNC-IO</span>
       </div>
     </div>
@@ -154,14 +171,14 @@
           <span style="background: var(--accent); padding: 2px 6px; font-size: 9px;">LIVE</span>
         </div>
         <div id="terminal">
-          <div class="log-line">> HUD COCKPIT ONLINE. CACHE LOADED.</div>
+          <div class="log-line">> HUD COCKPIT ONLINE.</div>
         </div>
       </div>
     </div>
 
   </div>
 
-  <!-- SKU Modal Editor with File Tree -->
+  <!-- SKU Modal Editor -->
   <div id="editorModal">
     <div class="modal-box hud-frame" style="width: 680px;">
       <div class="card-title">
@@ -184,8 +201,8 @@
       </div>
 
       <div style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px;">
-        <button class="btn-secondary" onclick="closeSkuEditor()">CLOSE</button>
-        <button class="btn-secondary" style="background: var(--accent); color: var(--white);" onclick="saveCurrentFileSku()">SAVE & CACHE CHANGES</button>
+        <button type="button" class="btn-secondary" onclick="closeSkuEditor()">CLOSE</button>
+        <button type="button" class="btn-secondary" style="background: var(--accent); color: var(--white);" onclick="saveCurrentFileSku()">SAVE & CACHE CHANGES</button>
       </div>
     </div>
   </div>
@@ -194,7 +211,7 @@
     let globalAccent = '#FF5500';
 
     function hsvToHex(h, s, v) {
-      let r, g, b, i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - f * s), q = v * (1 - (1 - f) * s);
+      let r, g, b, i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
       switch (i % 6) {
         case 0: r = v, g = t, b = p; break;
         case 1: r = q, g = v, b = p; break;
@@ -274,7 +291,7 @@
     async function openSkuEditor() {
       const selectedCategory = document.getElementById('skuSelect').value;
       document.getElementById('modalTargetTitle').textContent = `✎ SKU RULES FOR: ${selectedCategory}`;
-      document.getElementById('editorModal').style.display = 'flex';
+      document.getElementById('editorModal').classList.add('open');
       loadFolderTree(selectedCategory);
     }
 
@@ -323,7 +340,7 @@
           if (res.ok) content = await res.text();
         } catch (e) {}
       }
-      document.getElementById('modalSkuText').value = content;
+      document.getElementById('modalSkuText').value = content || '';
     }
 
     function saveCurrentFileSku() {
@@ -335,7 +352,7 @@
     }
 
     function closeSkuEditor() {
-      document.getElementById('editorModal').style.display = 'none';
+      document.getElementById('editorModal').classList.remove('open');
     }
 
     function renderGauge(canvasId, ratio, primaryLabel, subLabel) {
