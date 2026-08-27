@@ -9,18 +9,17 @@
     :root {
       --bg: #DEE3EB;
       --panel: #CAD2DE;
-      --card-bg: rgba(202, 210, 222, 0.7);
+      --card-bg: rgba(202, 210, 222, 0.75);
       --border: #8D9BAE;
       --border-light: #B2BDCC;
       --slate-dark: #1E2530;
       --slate-mid: #4A5568;
-      --slate-muted: #64748B;
-      --orange: #FF5500;
-      --orange-dim: rgba(255, 85, 0, 0.15);
+      --accent: #FF5500;
+      --accent-dim: rgba(255, 85, 0, 0.15);
       --text-main: #0F172A;
       --text-muted: #5A6A80;
       --white: #FFFFFF;
-      --font-mono: 'Consolas', 'Menlo', 'Monaco', monospace;
+      --font-mono: 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-mono); }
@@ -42,7 +41,7 @@
       overflow-x: hidden;
     }
 
-    /* Sci-Fi Corner Crop Borders */
+    /* Sci-Fi Tactical Corner Borders */
     .hud-frame {
       border: 1px solid var(--border);
       position: relative;
@@ -65,7 +64,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 12px;
+      padding: 8px 14px;
       border-bottom: 1.5px solid var(--border);
     }
     .header-left {
@@ -77,9 +76,9 @@
       letter-spacing: 1px;
     }
     .tech-badge {
-      background: var(--orange);
+      background: var(--accent);
       color: var(--white);
-      padding: 3px 8px;
+      padding: 4px 10px;
       font-size: 10px;
       letter-spacing: 0.5px;
       display: inline-flex;
@@ -91,12 +90,16 @@
       font-size: 8px;
     }
 
-    /* Main Display Layout */
+    /* Main Grid Layout */
     .main-grid {
       display: grid;
       grid-template-columns: 360px 1fr 340px;
       gap: 14px;
       flex: 1;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid { grid-template-columns: 1fr; }
     }
 
     .column {
@@ -116,18 +119,18 @@
       justify-content: space-between;
       padding-bottom: 4px;
       border-bottom: 1px dashed var(--border);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
-    /* Mode Selectors */
+    /* Mode Switching Tabs */
     .mode-switch {
       display: flex;
       gap: 4px;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .mode-btn {
       flex: 1;
-      padding: 8px 4px;
+      padding: 9px 4px;
       background: var(--bg);
       border: 1px solid var(--border);
       font-size: 10px;
@@ -141,15 +144,15 @@
       background: var(--slate-dark);
       color: var(--white);
       border-color: var(--slate-dark);
-      box-shadow: 0 0 0 1px var(--orange);
+      box-shadow: 0 0 0 1px var(--accent);
     }
 
-    /* Inputs */
+    /* Form Fields */
     .field-group {
       display: flex;
       flex-direction: column;
-      gap: 3px;
-      margin-bottom: 8px;
+      gap: 4px;
+      margin-bottom: 10px;
     }
     .field-label {
       font-size: 9px;
@@ -157,39 +160,36 @@
       color: var(--text-muted);
       letter-spacing: 0.5px;
     }
-    .file-input-box {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
     input[type="file"] {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      padding: 5px;
-      font-size: 10px;
-      color: var(--text-main);
-      outline: none;
-    }
-
-    .dropdown {
       width: 100%;
       background: var(--bg);
       border: 1px solid var(--border);
       padding: 6px;
       font-size: 10px;
       color: var(--text-main);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .dropdown {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 7px;
+      font-size: 10px;
+      color: var(--text-main);
       font-family: var(--font-mono);
       font-weight: bold;
       outline: none;
+      cursor: pointer;
     }
 
-    /* Actions */
+    /* Action Execution Button */
     .exec-btn {
-      background: var(--orange);
+      background: var(--accent);
       color: var(--white);
-      border: 1px solid var(--orange);
-      padding: 12px;
+      border: 1px solid var(--accent);
+      padding: 14px;
       font-size: 11px;
       font-weight: bold;
       letter-spacing: 1.5px;
@@ -202,21 +202,22 @@
       gap: 8px;
     }
     .exec-btn:hover {
-      background: #E04B00;
+      filter: brightness(1.15);
     }
     .exec-btn:disabled {
       background: var(--border);
       border-color: var(--border);
       cursor: not-allowed;
+      filter: grayscale(1);
     }
 
-    /* Center Gauges Deck */
+    /* Center Vector Gauge Deck */
     .center-deck {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 12px;
+      padding: 14px;
       position: relative;
     }
     .gauges-row {
@@ -226,6 +227,7 @@
       gap: 16px;
       width: 100%;
       margin: auto 0;
+      flex-wrap: wrap;
     }
     .gauge-wrapper {
       position: relative;
@@ -243,21 +245,20 @@
       font-weight: bold;
     }
     .center-hud-tag {
-      background: var(--orange);
+      background: var(--accent);
       color: var(--white);
-      padding: 2px 14px;
+      padding: 3px 16px;
       font-size: 11px;
       font-weight: bold;
       letter-spacing: 1px;
-      border-radius: 1px;
       margin-bottom: 8px;
     }
 
-    /* Telemetry R4 List Stream */
+    /* Telemetry Panel */
     .telemetry-header {
       background: var(--slate-dark);
       color: var(--white);
-      padding: 4px 8px;
+      padding: 6px 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -265,31 +266,31 @@
       font-weight: bold;
     }
     .r4-badge {
-      background: var(--orange);
+      background: var(--accent);
       color: var(--white);
-      padding: 1px 6px;
+      padding: 2px 6px;
       font-size: 9px;
     }
     #terminal {
       background: var(--bg);
       border: 1px solid var(--border);
-      padding: 8px;
-      height: 280px;
+      padding: 10px;
+      height: 290px;
       overflow-y: auto;
       font-size: 10px;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
     }
     .log-line {
-      line-height: 1.3;
+      line-height: 1.35;
       border-bottom: 1px dotted rgba(141, 155, 174, 0.3);
       padding-bottom: 2px;
     }
-    .log-line.warn { color: var(--orange); font-weight: bold; }
+    .log-line.warn { color: var(--accent); font-weight: bold; }
     .log-line.success { color: var(--slate-dark); font-weight: bold; }
 
-    /* Bottom Telemetry Ticker */
+    /* Footer */
     footer {
       display: flex;
       justify-content: space-between;
@@ -297,42 +298,41 @@
       font-size: 9px;
       color: var(--text-muted);
       border-top: 1px solid var(--border);
-      padding-top: 4px;
+      padding-top: 6px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Technical Header -->
+  <!-- Top Technical HUD Header -->
   <header class="hud-frame">
     <div class="header-left">
       <span>■ 360 WAVE DEV TOOL 11</span>
       <span style="color: var(--border);">|</span>
-      <span>SYS.VER: 4.8.0</span>
+      <span>SYS.VER: 5.0.0-CROSS-WEB</span>
       <span style="color: var(--border);">|</span>
-      <span>ONLINE CORE</span>
+      <span id="theme-tag">PALETTE: DYNAMIC</span>
     </div>
-    <div class="tech-badge">STAT.RG // 00:11:32:016</div>
+    <div class="tech-badge" id="telemetry-time">STAT.RG // 00:00:00:000</div>
   </header>
 
-  <!-- Main 3-Column Cockpit Workspace -->
+  <!-- Main HUD Layout -->
   <div class="main-grid">
 
-    <!-- Column 1: Control & Ingestion Parameters -->
+    <!-- Column 1: Configuration & File Ingestion -->
     <div class="column">
-      <div class="hud-frame" style="padding: 12px; flex: 1; display: flex; flex-direction: column;">
+      <div class="hud-frame" style="padding: 14px; flex: 1; display: flex; flex-direction: column;">
         <div class="card-title">
           <span>┌─ MISSION PARAMETERS</span>
-          <span style="color: var(--orange);">M2D/SL</span>
+          <span style="color: var(--accent);">M2D/SL</span>
         </div>
 
-        <!-- Mode Selector -->
         <div class="mode-switch">
           <button id="mode-renamer" class="mode-btn active" onclick="switchMode('renamer')">PDF RENAMER</button>
           <button id="mode-organizer" class="mode-btn" onclick="switchMode('organizer')">SKU ORGANIZER</button>
         </div>
 
-        <!-- Dynamic Form Fields -->
+        <!-- PDF Renamer Mode Form -->
         <div id="renamer-fields">
           <div class="field-group">
             <label class="field-label">1. SOURCE PDF DIRECTORY / FILES:</label>
@@ -343,12 +343,13 @@
             <input type="file" id="renamerCsvFile" accept=".csv" />
           </div>
           <div class="field-group" style="flex-direction: row; gap: 8px; margin-top: 6px;">
-            <label style="font-size: 10px; display: flex; align-items: center; gap: 4px;">
+            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px; cursor: pointer;">
               <input type="checkbox" id="simCheck" /> SIMULATE (DRY-RUN)
             </label>
           </div>
         </div>
 
+        <!-- SKU Organizer Mode Form -->
         <div id="organizer-fields" style="display: none;">
           <div class="field-group">
             <label class="field-label">1. SOURCE FILES TO CATEGORIZE:</label>
@@ -357,64 +358,61 @@
           <div class="field-group">
             <label class="field-label">2. SELECT SKU REPOSITORY CATEGORY:</label>
             <select id="skuSelect" class="dropdown">
-              <option value="Organizer_SKU">Organizer_SKU (Default CSVs)</option>
-              <option value="RB_SKU">RB_SKU (Default CSVs)</option>
-              <option value="WOYC_SOC6_SKU">WOYC_SOC6_SKU (Default CSVs)</option>
-              <option value="custom">-- UPLOAD CUSTOM SKU CSVs --</option>
+              <option value="Organizer_SKU">Organizer_SKU (Auto-Fetch from Repo)</option>
+              <option value="RB_SKU">RB_SKU (Auto-Fetch from Repo)</option>
+              <option value="WOYC_SOC6_SKU">WOYC_SOC6_SKU (Auto-Fetch from Repo)</option>
+              <option value="custom">-- UPLOAD LOCAL SKU CSVs --</option>
             </select>
           </div>
           <div class="field-group" id="customCsvGroup" style="display: none;">
-            <label class="field-label">3. UPLOAD CUSTOM SKU CSV FILES:</label>
+            <label class="field-label">3. UPLOAD LOCAL SKU CSV FILE(S):</label>
             <input type="file" id="orgCustomCsvFiles" multiple accept=".csv" />
           </div>
           <div class="field-group" style="margin-top: 4px;">
-            <label style="font-size: 10px; display: flex; align-items: center; gap: 4px;">
+            <label style="font-size: 10px; display: flex; align-items: center; gap: 5px; cursor: pointer;">
               <input type="checkbox" id="renameCountCheck" checked /> RENAME FINAL FOLDER WITH COUNT
             </label>
           </div>
         </div>
 
         <button id="execBtn" class="exec-btn" onclick="executeProcess()">
-          <span>► EXECUTE BATCH PIPELINE</span>
+          <span>► EXECUTE PIPELINE & DOWNLOAD ZIP</span>
         </button>
       </div>
     </div>
 
-    <!-- Column 2: Tactical HUD Vector Gauges Deck -->
+    <!-- Column 2: Center Vector Dial Deck -->
     <div class="hud-frame center-deck">
       <div class="center-hud-tag">STAT.RG // ACTIVE COCKPIT</div>
 
       <div class="gauges-row">
-        <!-- Main Circular Dial 1 -->
         <div class="gauge-wrapper">
           <div class="gauge-tag">STAT.RG</div>
           <canvas id="gauge1" width="180" height="180"></canvas>
           <span style="font-size: 9px; font-weight: bold; margin-top: 4px; color: var(--text-muted);">MATCH METRIC</span>
         </div>
 
-        <!-- Main Circular Dial 2 -->
         <div class="gauge-wrapper">
           <div class="gauge-tag">260.1 CORE</div>
           <canvas id="gauge2" width="220" height="220"></canvas>
           <span style="font-size: 9px; font-weight: bold; margin-top: 4px; color: var(--text-muted);">BATCH PROGRESS</span>
         </div>
 
-        <!-- Main Circular Dial 3 -->
         <div class="gauge-wrapper">
           <div class="gauge-tag">MDR02</div>
           <canvas id="gauge3" width="180" height="180"></canvas>
-          <span style="font-size: 9px; font-weight: bold; margin-top: 4px; color: var(--text-muted);">OUTPUT EFFICIENCY</span>
+          <span style="font-size: 9px; font-weight: bold; margin-top: 4px; color: var(--text-muted);">OUTPUT STATUS</span>
         </div>
       </div>
 
       <div style="display: flex; justify-content: space-between; width: 100%; font-size: 9px; color: var(--text-muted); border-top: 1px dashed var(--border); padding-top: 6px;">
         <span>CORE 01: NOMINAL</span>
-        <span>M2D / SL RATIO: 100%</span>
-        <span>THREAD SCHEDULER: ASYNC-IO</span>
+        <span>STREAM: CLIENT-ISOLATED</span>
+        <span>SCHEDULER: ASYNC-IO</span>
       </div>
     </div>
 
-    <!-- Column 3: R4 Telemetry Stream & Status -->
+    <!-- Column 3: Telemetry Stream -->
     <div class="column">
       <div class="hud-frame" style="padding: 10px; flex: 1; display: flex; flex-direction: column;">
         <div class="telemetry-header">
@@ -430,14 +428,61 @@
 
   </div>
 
-  <!-- Bottom Telemetry Ticker -->
+  <!-- Bottom Bar -->
   <footer>
-    <span>TACTICAL ENGINE DEPLOYED // GITHUB PAGES COMPATIBLE</span>
+    <span>TACTICAL BATCH ENGINE // ALL BROWSERS & OS SUPPORTED</span>
     <span>STATUS: READY</span>
-    <span>HOST: BROWSER CLIENT-SIDE ISOLATION</span>
+    <span>ENCRYPTED IN-MEMORY EXECUTION</span>
   </footer>
 
   <script>
+    /* Dynamic HSV Random Color Theme Generator */
+    function hsvToHex(h, s, v) {
+      let r, g, b, i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+      switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+      }
+      const toHex = x => Math.round(x * 255).toString(16).padStart(2, '0');
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    let globalAccent = '#FF5500';
+
+    function randomizeTheme() {
+      const accentHue = Math.random();
+      const bgHue = (accentHue + 0.5) % 1.0;
+
+      globalAccent = hsvToHex(accentHue, 0.95, 0.95);
+      const bg = hsvToHex(bgHue, 0.12, 0.90);
+      const panel = hsvToHex(bgHue, 0.18, 0.82);
+      const border = hsvToHex(bgHue, 0.25, 0.65);
+      const slateDark = hsvToHex(bgHue, 0.40, 0.18);
+
+      const r = document.documentElement.style;
+      r.setProperty('--accent', globalAccent);
+      r.setProperty('--bg', bg);
+      r.setProperty('--panel', panel);
+      r.setProperty('--border', border);
+      r.setProperty('--slate-dark', slateDark);
+
+      document.getElementById('theme-tag').textContent = `PALETTE: HUE-${Math.round(accentHue * 360)}`;
+    }
+    randomizeTheme();
+
+    /* Real-Time Telemetry Clock */
+    setInterval(() => {
+      const d = new Date();
+      const pad = (n, s=2) => String(n).padStart(s, '0');
+      document.getElementById('telemetry-time').textContent = 
+        `STAT.RG // ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}:${pad(d.getMilliseconds(), 3)}`;
+    }, 40);
+
+    /* Mode Selector Logic */
     let activeMode = 'renamer';
 
     function switchMode(mode) {
@@ -462,58 +507,39 @@
       term.scrollTop = term.scrollHeight;
     }
 
-    /* High Precision Vector HUD Gauges */
+    /* Vector Radial Gauges */
     function renderGauge(canvasId, ratio, primaryLabel, subLabel) {
       const cvs = document.getElementById(canvasId);
       const ctx = cvs.getContext('2d');
       ctx.clearRect(0, 0, cvs.width, cvs.height);
 
-      const cx = cvs.width / 2;
-      const cy = cvs.height / 2;
-      const r = (cvs.width / 2) - 16;
+      const cx = cvs.width / 2, cy = cvs.height / 2, r = (cvs.width / 2) - 16;
 
-      // Outer radial ticks
       for (let deg = 0; deg < 360; deg += 15) {
         let rad = (deg * Math.PI) / 180;
         let tLen = (deg % 45 === 0) ? 8 : 4;
         ctx.beginPath();
         ctx.moveTo(cx + (r + 4) * Math.cos(rad), cy + (r + 4) * Math.sin(rad));
         ctx.lineTo(cx + (r + 4 + tLen) * Math.cos(rad), cy + (r + 4 + tLen) * Math.sin(rad));
-        ctx.strokeStyle = (deg % 45 === 0) ? '#1E2530' : '#8D9BAE';
+        ctx.strokeStyle = '#8D9BAE';
         ctx.lineWidth = 1.5;
         ctx.stroke();
       }
 
-      // Base Track
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.strokeStyle = '#8D9BAE';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Static Slate Decorative Arcs
-      ctx.beginPath();
-      ctx.arc(cx, cy, r - 8, Math.PI * 0.7, Math.PI * 1.2);
-      ctx.strokeStyle = '#4A5568';
-      ctx.lineWidth = 8;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, r - 8, Math.PI * 1.5, Math.PI * 1.9);
-      ctx.strokeStyle = '#1E2530';
-      ctx.lineWidth = 12;
-      ctx.stroke();
-
-      // Active Dynamic Orange Telemetry Arc
       if (ratio > 0) {
         ctx.beginPath();
         ctx.arc(cx, cy, r - 4, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * Math.min(1.0, ratio)));
-        ctx.strokeStyle = '#FF5500';
+        ctx.strokeStyle = globalAccent;
         ctx.lineWidth = 6;
         ctx.stroke();
       }
 
-      // Center Text
       ctx.fillStyle = '#0F172A';
       ctx.font = 'bold 16px Consolas';
       ctx.textAlign = 'center';
@@ -534,6 +560,22 @@
     }
     initGauges();
 
+    /* Universal Download Engine (Cross-Browser Compatible) */
+    function triggerDownload(blob, filename) {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 2000);
+    }
+
     /* Batch Processing Engine */
     async function executeProcess() {
       const execBtn = document.getElementById('execBtn');
@@ -552,7 +594,7 @@
       }
     }
 
-    // PDF Renamer Pipeline[cite: 4]
+    /* Embedded PDF Renamer Engine */
     async function runRenamerPipeline() {
       const pdfFiles = document.getElementById('renamerPdfFiles').files;
       const csvFile = document.getElementById('renamerCsvFile').files[0];
@@ -562,7 +604,7 @@
         throw new Error("Select both PDF files and mapping CSV file.");
       }
 
-      log(`READING CSV: ${csvFile.name}`);
+      log(`PARSING CSV MAP: ${csvFile.name}`);
       const text = await csvFile.text();
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
@@ -571,7 +613,7 @@
       const bidIdx = headers.indexOf('batch_job_id');
 
       if (skuIdx === -1 || bidIdx === -1) {
-        throw new Error("CSV must have headers 'mapped_sku' and 'batch_job_id'.");
+        throw new Error("CSV must contain 'mapped_sku' and 'batch_job_id' headers.");
       }
 
       const map = {};
@@ -608,44 +650,42 @@
       }
 
       if (!simulate) {
-        log("BUILDING FINAL ARCHIVE...");
+        log("PACKAGING AND DOWNLOADING ZIP ARCHIVE...");
         const blob = await zip.generateAsync({ type: 'blob' });
         triggerDownload(blob, `Renamed_PDF_Export_${Date.now()}.zip`);
       }
-      log(`PIPELINE COMPLETE. Renamed: ${renamed}, NO_SKU: ${noSku}`, 'success');
+      log(`RENAMER COMPLETE: Renamed: ${renamed}, NO_SKU: ${noSku}`, 'success');
     }
 
-    // SKU File Organizer Pipeline[cite: 3]
+    /* Embedded SKU Organizer Engine */
     async function runOrganizerPipeline() {
       const targetFiles = document.getElementById('orgTargetFiles').files;
       const skuMode = document.getElementById('skuSelect').value;
+      const renameCount = document.getElementById('renameCountCheck').checked;
 
       if (!targetFiles.length) {
-        throw new Error("Select target files to organize.");
+        throw new Error("Select source files to categorize.");
       }
 
       let csvMapEntries = [];
 
       if (skuMode === 'custom') {
         const customFiles = document.getElementById('orgCustomCsvFiles').files;
-        if (!customFiles.length) throw new Error("Upload custom SKU CSV files.");
+        if (!customFiles.length) throw new Error("Upload at least one custom SKU CSV file.");
         for (const file of customFiles) {
           const content = await file.text();
           csvMapEntries.push({ name: file.name.replace(/\.csv$/i, ''), content });
         }
       } else {
-        // Fetch preset CSVs from repository if present or prompt
-        log(`FETCHING SKU PRESET: ${skuMode}...`);
+        log(`FETCHING SKU PRESET: SKU/${skuMode}/SKU_Mapping.csv...`);
         try {
           const res = await fetch(`SKU/${skuMode}/SKU_Mapping.csv`);
-          if (res.ok) {
-            const content = await res.text();
-            csvMapEntries.push({ name: skuMode, content });
-          } else {
-            throw new Error("Preset SKU files not found in repo. Select Custom CSV upload.");
-          }
+          if (!res.ok) throw new Error("Not found");
+          const content = await res.text();
+          csvMapEntries.push({ name: skuMode, content });
         } catch (e) {
-          throw new Error("Preset SKU folder fetch failed. Please use '-- UPLOAD CUSTOM SKU CSVs --' option.");
+          log(`[!] Preset not found on GitHub. Switch to '-- UPLOAD LOCAL SKU CSVs --' to provide custom files.`, 'warn');
+          throw new Error(`SKU file 'SKU/${skuMode}/SKU_Mapping.csv' not found in repo.`);
         }
       }
 
@@ -658,7 +698,7 @@
         const { name, content } = csvMapEntries[i];
         const skus = new Set(content.split(/[\r\n,]+/).map(s => s.trim()).filter(Boolean));
         let count = 0;
-        const targetDir = zip.folder(name);
+        const matchedFiles = [];
 
         for (const file of filesArr) {
           if (moved.has(file.name)) continue;
@@ -668,9 +708,14 @@
           if (skus.has(stem)) matched = true;
           else if (stem.includes(' ') && skus.has(stem.split(' ')[0])) matched = true;
           else if (stem.includes('_') && skus.has(stem.split('_')[0])) matched = true;
+          else {
+            for (const sku of skus) {
+              if (stem.startsWith(sku)) { matched = true; break; }
+            }
+          }
 
           if (matched) {
-            targetDir.file(file.name, file);
+            matchedFiles.push(file);
             moved.add(file.name);
             count++;
             totalMoved++;
@@ -678,22 +723,25 @@
           }
         }
 
+        if (matchedFiles.length > 0) {
+          const folderName = renameCount ? `${name}_${count}` : name;
+          const targetDir = zip.folder(folderName);
+          matchedFiles.forEach(f => targetDir.file(f.name, f));
+        }
+
         renderGauge('gauge2', (i + 1) / csvMapEntries.length, `${i + 1}/${csvMapEntries.length}`, 'LISTS');
       }
 
       renderGauge('gauge1', totalMoved / filesArr.length, `${totalMoved}/${filesArr.length}`, 'ORGANIZED');
 
-      log("CREATING ORGANIZED PACKAGE...");
-      const blob = await zip.generateAsync({ type: 'blob' });
-      triggerDownload(blob, `Organized_SKU_Bundle_${Date.now()}.zip`);
-      log(`DONE: Organized ${totalMoved} files across ${csvMapEntries.length} categories.`, 'success');
-    }
-
-    function triggerDownload(blob, filename) {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
+      if (totalMoved > 0) {
+        log("PACKAGING AND DOWNLOADING ZIP ARCHIVE...");
+        const blob = await zip.generateAsync({ type: 'blob' });
+        triggerDownload(blob, `Organized_${skuMode}_${totalMoved}.zip`);
+        log(`DONE: Organized ${totalMoved} files across ${csvMapEntries.length} categories.`, 'success');
+      } else {
+        log("DONE: No matching files found for the provided SKU list(s).", 'warn');
+      }
     }
   </script>
 </body>
