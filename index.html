@@ -7,6 +7,32 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="engine.js"></script>
+  <style>
+    .editor-layout {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 10px;
+      height: 280px;
+    }
+    .tree-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 6px;
+      overflow-y: auto;
+      font-size: 10px;
+    }
+    .tree-item {
+      padding: 4px;
+      cursor: pointer;
+      border-radius: 2px;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tree-item:hover { background: var(--border-light); }
+    .tree-item.active { background: var(--slate-dark); color: var(--white); }
+  </style>
 </head>
 <body>
 
@@ -14,11 +40,14 @@
     <div class="header-left">
       <span>■ 360 WAVE DEV TOOL 11</span>
       <span style="color: var(--border);">|</span>
-      <span>SYS.VER: 6.1.0-STRUCTURED</span>
+      <span>SYS.VER: 7.0.0-PRO</span>
       <span style="color: var(--border);">|</span>
       <span id="theme-tag">PALETTE: DYNAMIC</span>
     </div>
-    <div class="tech-badge" id="telemetry-time">STAT.RG // 00:00:00:000</div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="btn-secondary" style="color: var(--accent); border-color: var(--accent); padding: 3px 8px;" onclick="resetCache()">⟲ RESET / CLEAR CACHE</button>
+      <div class="tech-badge" id="telemetry-time">STAT.RG // 00:00:00:000</div>
+    </div>
   </header>
 
   <div class="main-grid">
@@ -53,39 +82,30 @@
           </div>
         </div>
 
-        <!-- Organizer Inputs -->
+        <!-- Organizer Inputs (Clean Top-Level Category Only) -->
         <div id="organizer-fields" style="display: none;">
           <div class="field-group">
             <label class="field-label">1. SOURCE FILES TO CATEGORIZE:</label>
             <input type="file" id="orgTargetFiles" multiple />
           </div>
 
-          <!-- Hierarchical SKU Dropdown -->
           <div class="field-group">
-            <label class="field-label">2. SELECT SKU TARGET FOLDER / CSV MAP:</label>
+            <label class="field-label">2. SELECT SKU TARGET FOLDER:</label>
             <select id="skuSelect" class="dropdown">
-              <optgroup label="📂 WOYC_SOC6_SKU (Ready for Processing)">
-                <option value="WOYC_SOC6_SKU">WOYC_SOC6_SKU (Entire Category)</option>
-                <option value="SKU/WOYC_SOC6_SKU/SKU_Mapping.csv">├─ SKU_Mapping.csv</option>
-              </optgroup>
-              <optgroup label="📂 Organizer_SKU">
-                <option value="Organizer_SKU">Organizer_SKU (Entire Category)</option>
-                <option value="SKU/Organizer_SKU/SKU_Mapping.csv">├─ SKU_Mapping.csv</option>
-              </optgroup>
-              <optgroup label="📂 Custom Operations">
-                <option value="custom">-- UPLOAD LOCAL CSV FILES --</option>
-              </optgroup>
+              <option value="WOYC_SOC6_SKU">WOYC_SOC6_SKU</option>
+              <option value="Organizer_SKU">Organizer_SKU</option>
+              <option value="custom">-- UPLOAD CSV FILES MANUALLY --</option>
             </select>
           </div>
 
-          <button type="button" class="btn-secondary" onclick="openSkuEditor()">✎ VIEW / ADD / EDIT ACTIVE SKU LIST</button>
+          <button type="button" class="btn-secondary" style="margin-bottom: 6px;" onclick="openSkuEditor()">✎ VIEW / ADD / EDIT SKU RULES</button>
 
-          <div class="field-group" id="customCsvGroup" style="display: none; margin-top: 6px;">
+          <div class="field-group" id="customCsvGroup" style="display: none;">
             <label class="field-label">3. UPLOAD CUSTOM CSV LIST(S):</label>
             <input type="file" id="orgCustomCsvFiles" multiple accept=".csv" />
           </div>
 
-          <div class="field-group" style="margin-top: 6px;">
+          <div class="field-group" style="margin-top: 4px;">
             <label style="font-size: 10px; display: flex; align-items: center; gap: 5px;">
               <input type="checkbox" id="renameCountCheck" checked /> RENAME FINAL SUBFOLDER WITH COUNT
             </label>
@@ -121,7 +141,7 @@
 
       <div style="display: flex; justify-content: space-between; width: 100%; font-size: 9px; color: var(--text-muted); border-top: 1px dashed var(--border); padding-top: 6px;">
         <span>CORE 01: NOMINAL</span>
-        <span>ROUTE: WOYC PROTOCOL</span>
+        <span>CACHE: ACTIVE</span>
         <span>SCHEDULER: ASYNC-IO</span>
       </div>
     </div>
@@ -134,25 +154,38 @@
           <span style="background: var(--accent); padding: 2px 6px; font-size: 9px;">LIVE</span>
         </div>
         <div id="terminal">
-          <div class="log-line">> HUD COCKPIT ONLINE.</div>
+          <div class="log-line">> HUD COCKPIT ONLINE. CACHE LOADED.</div>
         </div>
       </div>
     </div>
 
   </div>
 
-  <!-- SKU Modal Editor -->
+  <!-- SKU Modal Editor with File Tree -->
   <div id="editorModal">
-    <div class="modal-box hud-frame">
+    <div class="modal-box hud-frame" style="width: 680px;">
       <div class="card-title">
-        <span id="modalTargetTitle">✎ IN-MEMORY SKU LIST EDITOR</span>
+        <span id="modalTargetTitle">✎ SKU RULES & REPOSITORY TREE</span>
         <span style="cursor: pointer; color: var(--accent);" onclick="closeSkuEditor()">[X]</span>
       </div>
-      <label class="field-label">SKU ENTRIES (1 SKU PER LINE OR COMMA-SEPARATED):</label>
-      <textarea id="modalSkuText" style="height: 220px;" placeholder="Enter or edit SKUs here..."></textarea>
-      <div style="display: flex; gap: 6px; justify-content: flex-end;">
-        <button class="btn-secondary" onclick="closeSkuEditor()">CANCEL</button>
-        <button class="btn-secondary" style="background: var(--accent); color: var(--white);" onclick="saveSkuEditor()">APPLY TO SESSION</button>
+
+      <div class="editor-layout">
+        <!-- Tree Navigation -->
+        <div class="tree-box" id="fileTreeContainer">
+          <div style="font-weight: bold; margin-bottom: 4px; color: var(--text-muted);">FILES IN FOLDER:</div>
+          <div id="treeItems">Loading file hierarchy...</div>
+        </div>
+
+        <!-- Editor View -->
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <label class="field-label" id="activeEditingFileLabel">SELECT A FILE FROM THE TREE TO EDIT:</label>
+          <textarea id="modalSkuText" style="height: 100%;" placeholder="SKUs will appear here..."></textarea>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px;">
+        <button class="btn-secondary" onclick="closeSkuEditor()">CLOSE</button>
+        <button class="btn-secondary" style="background: var(--accent); color: var(--white);" onclick="saveCurrentFileSku()">SAVE & CACHE CHANGES</button>
       </div>
     </div>
   </div>
@@ -161,7 +194,7 @@
     let globalAccent = '#FF5500';
 
     function hsvToHex(h, s, v) {
-      let r, g, b, i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+      let r, g, b, i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - f * s), q = v * (1 - (1 - f) * s);
       switch (i % 6) {
         case 0: r = v, g = t, b = p; break;
         case 1: r = q, g = v, b = p; break;
@@ -196,6 +229,7 @@
     }, 40);
 
     let activeMode = 'renamer';
+    let currentSelectedTreePath = '';
 
     const engine = new BatchEngine({
       onLog: (msg, type = '') => {
@@ -213,6 +247,17 @@
       }
     });
 
+    function resetCache() {
+      if (confirm("Clear local cache and reset rules to repository defaults?")) {
+        engine.clearCache();
+        document.getElementById('renamerPdfFiles').value = "";
+        document.getElementById('renamerCsvFile').value = "";
+        document.getElementById('orgTargetFiles').value = "";
+        if (document.getElementById('orgCustomCsvFiles')) document.getElementById('orgCustomCsvFiles').value = "";
+        initGauges();
+      }
+    }
+
     function switchMode(mode) {
       activeMode = mode;
       document.getElementById('mode-renamer').classList.toggle('active', mode === 'renamer');
@@ -227,26 +272,70 @@
     });
 
     async function openSkuEditor() {
-      const target = document.getElementById('skuSelect').value;
-      document.getElementById('modalTargetTitle').textContent = `✎ EDITING: ${target}`;
-      let val = engine.getSkuOverride(target);
-      if (!val && target.endsWith('.csv')) {
+      const selectedCategory = document.getElementById('skuSelect').value;
+      document.getElementById('modalTargetTitle').textContent = `✎ SKU RULES FOR: ${selectedCategory}`;
+      document.getElementById('editorModal').style.display = 'flex';
+      loadFolderTree(selectedCategory);
+    }
+
+    async function loadFolderTree(category) {
+      const treeContainer = document.getElementById('treeItems');
+      treeContainer.innerHTML = 'Loading files...';
+
+      let files = [];
+      try {
+        const res = await fetch(`https://api.github.com/repos/emagein/D2P_Renaming/contents/SKU/${category}`);
+        if (res.ok) {
+          const data = await res.json();
+          files = data.filter(d => d.name.endsWith('.csv')).map(d => ({ name: d.name, path: `${category}/${d.name}`, url: d.download_url }));
+        }
+      } catch (e) {}
+
+      if (!files.length) {
+        files = [{ name: 'SKU_Mapping.csv', path: `${category}/SKU_Mapping.csv`, url: '' }];
+      }
+
+      treeContainer.innerHTML = '';
+      files.forEach((f, idx) => {
+        const div = document.createElement('div');
+        div.className = `tree-item ${idx === 0 ? 'active' : ''}`;
+        div.textContent = `📄 ${f.name}`;
+        div.onclick = () => selectFileFromTree(f, div);
+        treeContainer.appendChild(div);
+      });
+
+      if (files.length > 0) {
+        selectFileFromTree(files[0], treeContainer.firstChild);
+      }
+    }
+
+    async function selectFileFromTree(fileObj, elem) {
+      document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+      if (elem) elem.classList.add('active');
+
+      currentSelectedTreePath = fileObj.path;
+      document.getElementById('activeEditingFileLabel').textContent = `EDITING FILE: ${fileObj.name}`;
+
+      let content = engine.getSkuOverride(fileObj.path);
+      if (!content && fileObj.url) {
         try {
-          const res = await fetch(`https://raw.githubusercontent.com/emagein/D2P_Renaming/main/${target}`);
-          if (res.ok) val = await res.text();
+          const res = await fetch(fileObj.url);
+          if (res.ok) content = await res.text();
         } catch (e) {}
       }
-      document.getElementById('modalSkuText').value = val;
-      document.getElementById('editorModal').style.display = 'flex';
+      document.getElementById('modalSkuText').value = content;
     }
+
+    function saveCurrentFileSku() {
+      if (!currentSelectedTreePath) return;
+      const text = document.getElementById('modalSkuText').value;
+      engine.setSkuOverride(currentSelectedTreePath, text);
+      engine.onLog(`[✓] SAVED SKU RULES FOR ${currentSelectedTreePath}`);
+      closeSkuEditor();
+    }
+
     function closeSkuEditor() {
       document.getElementById('editorModal').style.display = 'none';
-    }
-    function saveSkuEditor() {
-      const target = document.getElementById('skuSelect').value;
-      engine.setSkuOverride(target, document.getElementById('modalSkuText').value);
-      engine.onLog(`[✓] SKU RULES APPLIED FOR ${target}`);
-      closeSkuEditor();
     }
 
     function renderGauge(canvasId, ratio, primaryLabel, subLabel) {
@@ -313,8 +402,8 @@
         } else {
           await engine.runOrganizer({
             targetFiles: document.getElementById('orgTargetFiles').files,
-            selectedTarget: document.getElementById('skuSelect').value,
-            customCsvFiles: document.getElementById('orgCustomCsvFiles').files,
+            selectedCategory: document.getElementById('skuSelect').value,
+            customCsvFiles: document.getElementById('orgCustomCsvFiles') ? document.getElementById('orgCustomCsvFiles').files : [],
             renameCount: document.getElementById('renameCountCheck').checked
           });
         }
